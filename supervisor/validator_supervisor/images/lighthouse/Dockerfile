@@ -1,0 +1,40 @@
+FROM rust:1.52.1 AS builder
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        cmake && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+ARG PORTABLE
+ENV PORTABLE $PORTABLE
+ARG COMMIT=3b600acdc5bf9726367c18277a22486573b8b457
+RUN git clone https://github.com/sigp/lighthouse /lighthouse && \
+    cd /lighthouse && \
+    git checkout $COMMIT && \
+    make install && \
+    make install-lcli
+
+FROM ubuntu:focal
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local/cargo/bin/lighthouse /usr/local/bin/lighthouse
+COPY --from=builder /usr/local/cargo/bin/lcli /usr/local/bin/lcli
+
+# Create unprivileged user
+RUN useradd -m somebody
+USER somebody
+WORKDIR /home/somebody
+
+ENV CANONICAL_DIR=/home/somebody/canonical
+RUN mkdir /home/somebody/canonical
+VOLUME /home/somebody/canonical
+
+COPY run.sh /home/somebody/
+
+CMD ["./run.sh"]

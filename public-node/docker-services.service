@@ -1,0 +1,16 @@
+[Unit]
+Description=Application services Docker Compose
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/services
+ExecStart=/usr/local/bin/docker-compose pull
+ExecStart=/usr/local/bin/docker-compose build
+ExecStart=/usr/local/bin/docker-compose up -d
+ExecStop=/usr/local/bin/docker-compose down
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,90 @@
+version: "3.9"
+services:
+  grafana:
+    build:
+      context: ./images/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - "grafana:/var/lib/grafana"
+    links:
+      - loki
+      - prometheus
+  loki:
+    build: ./images/loki
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      - "loki:/var/lib/loki"
+    command: ["-config.file=/etc/loki/config.yaml"]
+  prometheus:
+    build: ./images/prometheus
+    volumes:
+      - "prometheus:/prometheus"
+    links:
+      - geth
+      - prysm
+      - lighthouse
+  promtail:
+    build: images/promtail
+    volumes:
+      - "/var/log/journal/:/var/log/journal/"
+      - "/run/log/journal/:/run/log/journal/"
+      - "/etc/machine-id:/etc/machine-id"
+      - "promtail:/var/lib/promtail"
+    links:
+      - loki
+    command: ["-config.file=/etc/promtail/config.yml"]
+  geth:
+    build: images/geth
+    volumes:
+      - "geth:/home/somebody/.ethereum"
+    ports:
+      - "30303:30303/tcp"
+      - "30303:30303/udp"
+  lighthouse:
+    build: images/lighthouse
+    volumes:
+      - "lighthouse:/home/somebody/.lighthouse"
+      - "./validator-pubkeys.txt:/home/somebody/validator-pubkeys.txt"
+    ports:
+      - "9000:9000/tcp"
+      - "9000:9000/udp"
+    environment:
+      ETH1_HOST: geth
+    links:
+      - geth
+  prysm:
+    build: images/prysm
+    volumes:
+      - "prysm:/home/somebody/.eth2"
+    environment:
+      ETH1_HOST: geth
+    ports:
+      - "12000:12000/udp"
+      - "13000:13000/tcp"
+    links:
+      - geth
+  ssh:
+    build: images/ssh
+    ports:
+      - "2222:22"
+    volumes:
+      - "supervisor_backups:/home/somebody/supervisor-backups"
+      - "./authorized_keys:/home/somebody/.ssh/authorized_keys"
+    links:
+      - grafana
+      - geth
+      - lighthouse
+      - loki
+      - prysm
+volumes:
+  grafana:
+  loki:
+  promtail:
+  geth:
+  prysm:
+  prometheus:
+  lighthouse:
+  supervisor_backups:
+
