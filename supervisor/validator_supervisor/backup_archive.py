@@ -17,6 +17,7 @@ The unpacked archive has the following structure:
 
 from __future__ import annotations
 
+import datetime
 import logging
 import time
 import io
@@ -162,4 +163,8 @@ def make_validator_data_backup(backup_key: bytes, backup_path: str, data_dir: st
     with open(backup_path, 'wb') as dst:
         archive = BackupArchive.pack(data_dir)
         bytes_written = archive.lock(backup_key, dst)
-    LOG.debug(f"Wrote backup to {backup_path}, {bytes_written} bytes")
+        timestamp = datetime.datetime.fromtimestamp(archive.timestamp)
+    LOG.debug(
+        f"Wrote backup to {backup_path} with timestamp {timestamp.isoformat()}, {bytes_written} "
+        "bytes"
+    )

@@ -283,12 +283,14 @@ class ValidatorSupervisor(RpcTarget):
             raise UnlockRequired()
         if self._validator.is_running():
             raise ValidatorRunning()
-        LOG.debug(f"Running save_backup({self._backup_filename})")
 
+        LOG.debug(f"Saving backup to {self._backup_filename}")
         make_validator_data_backup(self._backup_key, self._backup_path, self._validator_canonical_dir)
         for client in self._ssh_clients:
             remote_path = f"~/{self._backup_filename}"
-            if not await client.copy_local_to_remote(self._backup_path, remote_path):
+            if await client.copy_local_to_remote(self._backup_path, remote_path):
+                LOG.debug(f"Uploaded scp backup to {client.node}")
+            else:
                 LOG.warning(f"Failed to upload scp backup to {client.node}")
 
     async def start_validator(self) -> bool:

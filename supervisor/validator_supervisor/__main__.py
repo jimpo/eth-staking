@@ -6,7 +6,6 @@ import os
 import signal
 import sys
 from typing import Union
-import yaml
 
 from .cli import Subcommand, parse_cli_args
 from .config import Config, SSHConnInfo, read_config, read_root_key, write_root_key
@@ -75,10 +74,18 @@ def run_control(args) -> None:
     controller.cmdloop()
 
 
-def configure_logging(logging_config_path: str) -> None:
-    with open(logging_config_path, 'r') as f:
-        logging_config = yaml.load(f, Loader=yaml.Loader)
-    logging.config.dictConfig(logging_config)
+def configure_logging(supervisor_log_path: str, log_level: int = logging.DEBUG) -> None:
+    formatter = logging.Formatter('%(levelname)-8s %(name)-15s %(message)s')
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(formatter)
+    # Logs are uploaded from the log file to remote Loki by Promtail unless disabled.
+    logfile_handler = logging.FileHandler(supervisor_log_path)
+    logfile_handler.setFormatter(logging.Formatter('%(levelname)-8s %(name)-15s %(message)s'))
+
+    logging.basicConfig(
+        handlers=[stdout_handler, logfile_handler],
+        level=log_level,
+    )
 
 
 def main() -> None:
@@ -88,9 +95,8 @@ def main() -> None:
         perform_setup(args.config_path)
 
     if args.subcommand_name == Subcommand.DAEMON.value:
-        configure_logging(args.logging_config_path)
         config = read_config(args.config_path)
-        logging.root.addHandler(logging.FileHandler(config.supervisor_log_path))
+        configure_logging(config.supervisor_log_path, args.log_level)
         asyncio.run(run_daemon(config, args))
 
     if args.subcommand_name == Subcommand.CONTROL.value:

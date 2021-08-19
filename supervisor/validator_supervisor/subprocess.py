@@ -275,7 +275,7 @@ async def start_supervised(
 ) -> asyncio.Task:
     await subproc.start()
     LOG.info(f"Started supervised process {name}")
-    return asyncio.create_task(_supervise(name, subproc, retry_delay, stop_event))
+    return asyncio.create_task(_supervise(name, subproc, retry_delay, stop_event), name=name)
 
 
 async def start_supervised_multi(

@@ -4,6 +4,7 @@ Command line interface specification.
 
 import argparse
 from enum import Enum
+import logging
 
 from .config import DEFAULT_BASTION_SSH_USER
 
@@ -37,8 +38,8 @@ def parse_cli_args():
         subparser.add_argument('--config-path', required=True,
                                help='Path to the YAML configuration file')
 
-    daemon_parser.add_argument('--logging-config-path', required=True,
-                               help='Path to the YAML logging configuration file')
+    daemon_parser.add_argument('--log-level', type=_parse_log_level, default=logging.DEBUG,
+                               help='Log level (DEBUG, INFO, WARN, ERROR, CRITICAL)')
     daemon_parser.add_argument('--disable-promtail', action='store_true',
                                help='Disable upload of local logs to remote Loki server with Promtail')
 
@@ -58,3 +59,10 @@ def parse_cli_args():
                                 help='Path to SSL certificate for validator RPC auth')
 
     return parser.parse_args()
+
+
+def _parse_log_level(level: str) -> int:
+    level_no = logging.getLevelName(level)
+    if not isinstance(level_no, int):
+        raise ValueError(f"Invalid log level: {level}")
+    return level_no
