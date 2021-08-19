@@ -254,11 +254,14 @@ async def _supervise(
         LOG.info(f"Supervised process {name} exited")
         elapsed = time.time() - started_at
 
+        if not stop_event.is_set() and elapsed < retry_delay:
+            try:
+                await asyncio.wait_for(stop_event.wait(), timeout=retry_delay - elapsed)
+            except asyncio.TimeoutError:
+                pass
+
         if stop_event.is_set():
             break
-
-        if elapsed < retry_delay:
-            await asyncio.sleep(retry_delay - elapsed)
 
         try:
             await subproc.start()

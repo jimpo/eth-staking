@@ -206,10 +206,12 @@ class ValidatorSupervisor(RpcTarget):
         # Give Promtail a bit of time to finish uploading logs.
         await asyncio.sleep(3)
 
+        LOG.debug("Stopping Promtails")
         stop_promtails.set()
         if promtail_tasks:
             await asyncio.wait(promtail_tasks)
 
+        LOG.debug("Stopping SSH tunnels")
         stop_ssh_tunnels.set()
         if ssh_tunnel_tasks:
             await asyncio.wait(ssh_tunnel_tasks)
