@@ -87,4 +87,3 @@ volumes:
   prometheus:
   lighthouse:
   supervisor_backups:
-

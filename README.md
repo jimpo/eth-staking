@@ -45,7 +45,7 @@ See the README in the `public-node/` and `supervisor/` directories for further d
 
 ## Issues & contact info
 
-If you find a security issue, please contact me. My GPG key fingerprint is `017B 8B03 CCC8 58A5 0B8D  916F E133 7A66 289E D3BD` and the key is on `pgp.mit.edu`. My email is linked to my [GitHub profile](https://github.com/jimpo) and my GPG key.
+If you find a security issue, please contact me. My PGP key fingerprint is `017B 8B03 CCC8 58A5 0B8D  916F E133 7A66 289E D3BD` and the key is on my [GitHub profile](https://github.com/jimpo.gpg) and on the [Ubuntu PGP keyserver](https://keyserver.ubuntu.com/pks/lookup?search=0xE1337A66289ED3BD&fingerprint=on&op=index). My email is linked my GPG key and is also on my [GitHub profile](https://github.com/jimpo).
 
 For other concerns, create a GitHub issue.
 

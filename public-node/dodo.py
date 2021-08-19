@@ -24,7 +24,7 @@ def generate_docker_compose_file(deployment: str):
         spec = yaml.load(f, Loader=yaml.Loader)
 
     if network == Eth2Network.MAINNET:
-        for service in ('geth', 'lighthouse'):
+        for service in ('geth', 'lighthouse', 'prysm'):
             if 'environment' not in spec['services'][service]:
                 spec['services'][service]['environment'] = {}
             spec['services'][service]['environment']['MAINNET'] = 1

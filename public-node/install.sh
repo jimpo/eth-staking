@@ -61,8 +61,9 @@ if [[ $is_update -eq 1 ]] ; then
     # If docker-services.service, restart systemctl
     set +e
     diff docker-services.service /etc/systemd/system/docker-services.service --brief >/dev/null 2>&1
+    diff_retcode=$?
     set -e
-    if [[ $? -ne 0 ]] ; then
+    if [[ $diff_retcode -ne 0 ]] ; then
         echo "Updating docker-services.service..."
         cp docker-services.service /etc/systemd/system/
         systemctl daemon-reload
@@ -76,13 +77,15 @@ mkdir /services
 
 # Initialize Docker services
 cp -r docker-compose.yml images authorized_keys validator-pubkeys.txt /services
+docker-compose --project-directory /services build
 
 # Configure Docker daemon
 # If docker-daemon.json changed, restart Docker service
 set +e
 diff docker-daemon.json /etc/docker/daemon.json --brief >/dev/null 2>&1
+diff_retcode=$?
 set -e
-if [[ $? -ne 0 ]] ; then
+if [[ $diff_retcode -ne 0 ]] ; then
     echo "Updating /etc/docker/daemon.json..."
     cp docker-daemon.json /etc/docker/daemon.json
     systemctl restart docker.service
