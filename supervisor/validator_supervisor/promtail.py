@@ -79,7 +79,7 @@ class Promtail(SimpleSubprocess):
         positions_volume_name = f"validator-supervisor_promtail_{self.node_sanitized}"
         cmd = [
             'docker', 'run', '--rm',
-            '--name', f"validator-supervisor_{os.getpid()}_promtail",
+            '--name', f"validator-supervisor_{os.getpid()}_promtail_{self.node_sanitized}",
             '--pull', 'always',
             '--net', 'host',
             '--volume', f"{os.path.abspath(config_path)}:/etc/promtail/config.yml",

@@ -9,7 +9,7 @@ from asyncio import Task, FIRST_COMPLETED
 import logging
 from pkg_resources import resource_filename
 from subprocess import PIPE
-from typing import Awaitable, List, Optional
+from typing import Awaitable, Dict, List, Optional
 
 from .exceptions import DockerBuildException
 
@@ -55,7 +55,11 @@ class ExitMixin(object):
         return self._exit_event.is_set()
 
 
-async def build_docker_image(image_name: str, version: str) -> str:
+async def build_docker_image(
+        image_name: str,
+        version: str,
+        build_args: Optional[Dict[str, str]] = None,
+) -> str:
     """
     Build a Docker image from a context in the images/ directory.
 
@@ -63,15 +67,20 @@ async def build_docker_image(image_name: str, version: str) -> str:
 
     :param image_name: name of the image in the images/ directory
     :param version: a version string
+    :param build_args: a mapping of build args
     :return: the Docker image ID
     """
     image_tag = f"validator-supervisor/{image_name}:{version}"
     context_dir = resource_filename('validator_supervisor', f"images/{image_name}")
     LOG.debug(f"Building Docker image {image_tag}...")
-    build_proc = await asyncio.create_subprocess_exec(
-        'docker', 'build', '-t', image_tag, context_dir, '--quiet',
-        stdout=PIPE, stderr=PIPE,
-    )
+
+    build_cmd = ['docker', 'build']
+    if build_args:
+        for key, val in build_args.items():
+            build_cmd.extend(['--build-arg', f"{key}={val}"])
+    build_cmd.extend(['-t', image_tag, context_dir, '--quiet'])
+    build_proc = await asyncio.create_subprocess_exec(*build_cmd, stdout=PIPE, stderr=PIPE)
+
     image_id_encoded, err_encoded = await build_proc.communicate()
     if build_proc.returncode != 0:
         raise DockerBuildException(

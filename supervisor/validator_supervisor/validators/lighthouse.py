@@ -3,9 +3,10 @@ from __future__ import annotations
 import aiohttp
 import asyncio
 from asyncio.subprocess import Process
+from dataclasses import dataclass
 import logging
 import os
-from typing import IO, List, Optional
+from typing import Dict, IO, List, Optional
 
 from ..backup_archive import check_validator_data_dir
 from ..subprocess import HealthCheck
@@ -13,7 +14,25 @@ from ..util import build_docker_image
 from .base import ValidatorRunner
 
 LOG = logging.getLogger(__name__)
-LIGHTHOUSE_VERSION = "v1.4.0"
+
+
+@dataclass
+class LighthouseRelease:
+    version: str
+    commit_hash: str
+
+
+RELEASES: Dict[str, LighthouseRelease] = {
+    release.version: release for release in
+    (
+        LighthouseRelease("v1.4.0", "3b600acdc5bf9726367c18277a22486573b8b457"),
+        LighthouseRelease("v1.5.0-rc.1", "c7379836a5ba58eca426189d970288730e7695d0"),
+    )
+}
+DEFAULT_VERSIONS = {
+    "mainnet": "v1.4.0",
+    "pyrmont": "v1.5.0-rc.1",
+}
 
 
 class LighthouseValidator(ValidatorRunner):
@@ -24,8 +43,12 @@ class LighthouseValidator(ValidatorRunner):
             out_log_filepath: str,
             err_log_filepath: str,
             beacon_node_ports: List[int],
+            version: Optional[str] = None,
     ):
         super().__init__(eth2_network, datadir, out_log_filepath, err_log_filepath)
+        if version is None:
+            version = DEFAULT_VERSIONS[eth2_network]
+        self.release = RELEASES[version]
         self.beacon_node_ports = beacon_node_ports
         self._beacon_node_port: Optional[int] = None
 
@@ -47,7 +70,11 @@ class LighthouseValidator(ValidatorRunner):
             LOG.warning("No healthy lighthouse beacon nodes found")
             return None
 
-        image_id = await build_docker_image('lighthouse', LIGHTHOUSE_VERSION)
+        image_id = await build_docker_image(
+            'lighthouse',
+            self.release.version,
+            build_args={'COMMIT': self.release.commit_hash},
+        )
         return await asyncio.subprocess.create_subprocess_exec(
             'docker', 'run', '--rm',
             '--name', f"validator-supervisor_{os.getpid()}_lighthouse",
