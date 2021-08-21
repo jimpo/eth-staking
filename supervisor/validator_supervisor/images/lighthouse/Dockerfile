@@ -26,15 +26,16 @@ RUN apt-get update && \
 COPY --from=builder /usr/local/cargo/bin/lighthouse /usr/local/bin/lighthouse
 COPY --from=builder /usr/local/cargo/bin/lcli /usr/local/bin/lcli
 
-# Create unprivileged user
-RUN useradd -m somebody
-USER somebody
-WORKDIR /home/somebody
+RUN mkdir /app && \
+    mkdir /app/canonical && \
+    mkdir /app/lighthouse
+WORKDIR /app
 
-ENV CANONICAL_DIR=/home/somebody/canonical
-RUN mkdir /home/somebody/canonical
-VOLUME /home/somebody/canonical
+ENV CANONICAL_DIR=/app/canonical LIGHTHOUSE_DIR=/app/lighthouse
+VOLUME /app/canonical
+RUN chmod 0777 /app/lighthouse
 
-COPY run.sh /home/somebody/
+COPY run.sh /app/
 
-CMD ["./run.sh"]
+USER nobody
+CMD ["/app/run.sh"]

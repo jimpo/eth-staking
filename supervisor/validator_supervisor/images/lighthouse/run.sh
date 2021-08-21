@@ -5,6 +5,7 @@ set -e
 for validator_dir in $CANONICAL_DIR/validators/0x* ; do
     if [[ -d $validator_dir ]] ; then
         lighthouse account validator import \
+            --datadir $LIGHTHOUSE_DIR \
             --network "$ETH2_NETWORK" \
             --password-file $validator_dir/password.txt \
             --reuse-password \
@@ -14,11 +15,13 @@ done
 
 if [[ -s $CANONICAL_DIR/slashing-protection.json ]] ; then
     lighthouse account validator slashing-protection import \
+        --datadir $LIGHTHOUSE_DIR \
         --network "$ETH2_NETWORK" \
         $CANONICAL_DIR/slashing-protection.json
 fi
 
 lighthouse validator \
+    --datadir $LIGHTHOUSE_DIR \
     --network "$ETH2_NETWORK" \
     --beacon-nodes "$BEACON_NODES" \
     &
@@ -39,6 +42,7 @@ wait $validator_pid
 retcode=$?
 
 lighthouse account validator slashing-protection export \
+    --datadir $LIGHTHOUSE_DIR \
     --network "$ETH2_NETWORK" \
     $CANONICAL_DIR/slashing-protection.json
 
