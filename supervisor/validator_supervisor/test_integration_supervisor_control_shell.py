@@ -89,23 +89,20 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
             'test/validator_data',
         )
 
-    # TODO: Get this passing. It's failing because of the lighthouse health check since there is
-    #     beacon node connected to the test bastion.
-    #
-    # async def test_lighthouse_is_running_on_start(self):
-    #     await self._wait_for_validator_running(timeout=5)
-    #     lighthouse_pid = self.supervisor._validator.get_pid()
-    #     self.assertIsNotNone(lighthouse_pid)
-    #
-    #     result_proc = subprocess.run(
-    #         ["ps", "--pid", str(lighthouse_pid), "-o", "command"],
-    #         check=True,
-    #         capture_output=True,
-    #     )
-    #     output = result_proc.stdout.decode()
-    #     output_lines = output.splitlines()
-    #     self.assertEqual(2, len(output_lines))
-    #     self.assertRegex(output_lines[1].strip(), r"docker run .*lighthouse")
+    async def test_lighthouse_is_running_on_start(self):
+        await self._wait_for_validator_running(timeout=5)
+        lighthouse_pid = self.supervisor._validator.get_pid()
+        self.assertIsNotNone(lighthouse_pid)
+
+        result_proc = subprocess.run(
+            ["ps", "--pid", str(lighthouse_pid), "-o", "command"],
+            check=True,
+            capture_output=True,
+        )
+        output = result_proc.stdout.decode()
+        output_lines = output.splitlines()
+        self.assertEqual(2, len(output_lines))
+        self.assertRegex(output_lines[1].strip(), r"docker run .*lighthouse")
 
     async def test_remotely_stop_validator(self):
         await self._wait_for_validator_running(timeout=5)
