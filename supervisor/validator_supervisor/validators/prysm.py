@@ -9,10 +9,13 @@ from ..util import build_docker_image
 from .base import ValidatorRunner
 
 LOG = logging.getLogger(__name__)
-PRYSM_VERSION = "v1.4.2"
+PRYSM_VERSION = "v1.4.3"
 
 
 class PrysmValidator(ValidatorRunner):
+    """
+    NOTE: This doesn't work yet.
+    """
     async def _launch(
             self,
             out_log_file: Optional[IO[str]],
@@ -28,6 +31,7 @@ class PrysmValidator(ValidatorRunner):
             '-e', f"BEACON_NODES=http://localhost:5052",
             '--net', 'host',
             '--volume', f"{os.path.abspath(self.datadir)}:/home/somebody/canonical",
+            '--user', str(os.getuid()),
             image_id,
             stdout=out_log_file,
             stderr=err_log_file,

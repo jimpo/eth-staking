@@ -2,8 +2,8 @@
 
 set -e
 
-wallet_dir="$HOME/.eth2validators/prysm-wallet-v2"
-datadir="$HOME/.eth2"
+wallet_dir="/app/.eth2validators/prysm-wallet-v2"
+datadir="/app/.eth2"
 wallet_password_file=wallet-password.txt
 
 # Generate secure random wallet password
