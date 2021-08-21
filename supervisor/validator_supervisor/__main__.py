@@ -5,7 +5,7 @@ import logging.config
 import os
 import signal
 import sys
-from typing import Union
+from typing import Optional, Union
 
 from .cli import Subcommand, parse_cli_args
 from .config import Config, SSHConnInfo, read_config, read_root_key, write_root_key
@@ -13,11 +13,12 @@ from .control_shell import ControlShell
 from .exceptions import UnlockRequired
 from .setup import perform_setup
 from .ssh import UnixSocket
-from .supervisor import ValidatorSupervisor
+from .supervisor import CONTROL_RPC_SOCKNAME, ValidatorSupervisor
 
 LOG = logging.getLogger(__name__)
 
 ROOT_KEY_FILENAME = 'supervisor-key.hex'
+DEFAULT_LOCAL_RPC_USER = 'local'
 
 
 async def run_daemon(config: Config, args):
@@ -55,8 +56,18 @@ async def run_daemon(config: Config, args):
 def run_control(args) -> None:
     logging.basicConfig(stream=sys.stdout)
 
+    auth_user: Optional[str] = args.auth_user
+    auth_key: Optional[str] = args.auth_key
+    ssl_cert: Optional[str] = args.ssl_cert
     endpoint: Union[UnixSocket, SSHConnInfo]
-    if args.rpc_socket_path:
+    if args.config_path:
+        config = read_config(args.config_path)
+        endpoint = UnixSocket(os.path.join(config.data_dir, CONTROL_RPC_SOCKNAME))
+        ssl_cert = config.ssl_cert_file
+        if DEFAULT_LOCAL_RPC_USER in config.rpc_users:
+            auth_user = DEFAULT_LOCAL_RPC_USER
+            auth_key = config.rpc_users[auth_user]
+    elif args.rpc_socket_path:
         endpoint = UnixSocket(args.rpc_socket_path)
     elif args.bastion_host:
         endpoint = SSHConnInfo(
@@ -70,7 +81,7 @@ def run_control(args) -> None:
         sys.stderr.write("Must provide either --rpc-socket-path or --bastion-host")
         sys.exit(1)
 
-    controller = ControlShell(endpoint, args.ssl_cert, args.auth_user, args.auth_key)
+    controller = ControlShell(endpoint, ssl_cert, auth_user, auth_key)
     controller.cmdloop()
 
 

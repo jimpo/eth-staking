@@ -43,6 +43,8 @@ def parse_cli_args():
     daemon_parser.add_argument('--disable-promtail', action='store_true',
                                help='Disable upload of local logs to remote Loki server with Promtail')
 
+    control_parser.add_argument('--config-path',
+                                help='Path to YAML configuration file for daemon running locally')
     control_parser.add_argument('--rpc-socket-path',
                                 help='Path to local UNIX domain socket for the daemon')
     control_parser.add_argument('--auth-user', help="User name for control authentication")

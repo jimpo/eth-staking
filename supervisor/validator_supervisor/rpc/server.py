@@ -7,6 +7,7 @@ See RpcServer class documentation for more details.
 import asyncio
 import json
 import logging
+import os
 from ssl import SSLContext
 from typing import Dict, Optional, Tuple
 
@@ -31,6 +32,9 @@ class RpcServer(object):
 
     There is an authentication protocol on a per-connection basis. This provides only marginal
     benefit currently, but we may want to have different users with different RPC privilege levels.
+
+    TLS is left as a non-mandatory option since remote connections already come through an SSH
+    tunnel.
     """
     _server: Optional[asyncio.AbstractServer]
 
@@ -59,6 +63,8 @@ class RpcServer(object):
             self.sock_path,
             ssl=self._ssl,
         )
+        # Any user on the host can connect
+        os.chmod(self.sock_path, 0o777)
         LOG.info(f"Started RPC server on UNIX domain socket at path {self.sock_path}")
 
     async def stop(self) -> None:
