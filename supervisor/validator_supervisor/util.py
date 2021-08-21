@@ -5,36 +5,50 @@ What, you think a project could exist without one?
 """
 
 import asyncio
-from asyncio import FIRST_COMPLETED
+from asyncio import Task, FIRST_COMPLETED
 import logging
 from pkg_resources import resource_filename
 from subprocess import PIPE
-from typing import Awaitable, Optional
+from typing import Awaitable, List, Optional
 
 from .exceptions import DockerBuildException
 
 LOG = logging.getLogger(__name__)
 
 
+async def either_or_interrupt(awaitable: Awaitable, interrupts: List[Awaitable]) -> Optional[Task]:
+    """
+    Wait for either the given awaitable or for an interrupt event. If the interrupt happens first,
+    return the pending task. All interrupts must be cancellable.
+
+    :param awaitable:
+    :param interrupts: a list of cancellable interrupts
+    :return: the pending task if exited early or None if it completed
+    """
+    if isinstance(awaitable, Task):
+        main_task = awaitable
+    else:
+        main_task = asyncio.create_task(awaitable)
+    wait_tasks = interrupts
+    wait_tasks.append(main_task)
+    _done, pending = await asyncio.wait(wait_tasks, return_when=FIRST_COMPLETED)
+    for interrupt_task in pending - {main_task}:
+        interrupt_task.cancel()
+    return main_task if main_task in pending else None
+
+
 class ExitMixin(object):
     _exit_event: asyncio.Event
 
-    async def _either_or_exit(self, awaitable: Awaitable) -> Optional[Awaitable]:
+    async def _either_or_exit(self, awaitable: Awaitable) -> Optional[Task]:
         """
         Wait for either the given awaitable or for this to exit. If the exit happens first, return
-        the pending task as an awaitable.
+        the pending task.
 
         :param awaitable:
-        :return:
+        :return: the pending task if exited early or None if it completed
         """
-        _done, pending = await asyncio.wait(
-            [awaitable, self._exit_event.wait()],
-            return_when=FIRST_COMPLETED,
-        )
-        if self._exit_event.is_set() and pending:
-            assert len(pending) == 1
-            return list(pending)[0]
-        return None
+        return await either_or_interrupt(awaitable, interrupts=[self._exit_event.wait()])
 
     @property
     def _exited(self) -> bool:

@@ -8,12 +8,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import asyncio
-from asyncio import FIRST_COMPLETED, FIRST_EXCEPTION
+from asyncio import FIRST_EXCEPTION
 from asyncio.subprocess import Process
 import logging
 import os.path
 import time
-from typing import Awaitable, IO, List, Optional, Tuple, Set
+from typing import Awaitable, IO, List, Optional, Tuple
+
+from .util import either_or_interrupt
 
 LOG = logging.getLogger(__name__)
 FIRST_GRACE_PERIOD = 2
@@ -100,12 +102,8 @@ class SimpleSubprocess(Subprocess, ABC):
 
     async def watch(self) -> None:
         if self._proc is not None:
-            proc_wait_task = asyncio.create_task(self._proc.wait())
-            _, pending = await asyncio.wait(
-                [proc_wait_task, self._stop.wait()],
-                return_when=FIRST_COMPLETED,
-            )
-            if proc_wait_task in pending:
+            proc_wait_task = await either_or_interrupt(self._proc.wait(), [self._stop.wait()])
+            if proc_wait_task is not None:
                 await self._robust_terminate(self._proc, proc_wait_task)
 
             await self._cleanup(self._proc, self._stop.is_set())
@@ -126,13 +124,11 @@ class SimpleSubprocess(Subprocess, ABC):
         except ProcessLookupError:
             pass
 
-        done_tasks, pending_tasks = await asyncio.wait(
-            [proc_wait_task, asyncio.sleep(FIRST_GRACE_PERIOD)],
-            return_when=FIRST_COMPLETED,
+        pending_proc_task = await either_or_interrupt(
+            proc_wait_task,
+            interrupts=[asyncio.sleep(FIRST_GRACE_PERIOD)],
         )
-        if proc_wait_task in done_tasks:
-            for task in pending_tasks:
-                task.cancel()
+        if pending_proc_task is None:
             return
 
         LOG.warning(f"Did not terminate within {FIRST_GRACE_PERIOD} seconds, retrying SIGTERM")
@@ -141,13 +137,11 @@ class SimpleSubprocess(Subprocess, ABC):
         except ProcessLookupError:
             pass
 
-        done_tasks, pending_tasks = await asyncio.wait(
-            [proc_wait_task, asyncio.sleep(FINAL_GRACE_PERIOD)],
-            return_when=FIRST_COMPLETED,
+        pending_proc_task = await either_or_interrupt(
+            proc_wait_task,
+            interrupts=[asyncio.sleep(FINAL_GRACE_PERIOD)],
         )
-        if proc_wait_task in done_tasks:
-            for task in pending_tasks:
-                task.cancel()
+        if pending_proc_task is None:
             return
 
         LOG.warning(
@@ -225,21 +219,16 @@ class HealthCheck(ABC):
 
 async def _watch_subproc(name: str, subproc: Subprocess, stop_event: asyncio.Event) -> None:
     health_check = subproc.health_check()
-    subproc_task = asyncio.create_task(subproc.watch())
-    wait_tasks: List[Awaitable] = [subproc_task, stop_event.wait()]
+    interrupts: List[Awaitable] = [stop_event.wait()]
     if health_check is not None:
-        wait_tasks.append(health_check.monitor())
-    _, pending_tasks = await asyncio.wait(wait_tasks, return_when=asyncio.FIRST_COMPLETED)
+        interrupts.append(health_check.monitor())
+    subproc_task = await either_or_interrupt(subproc.watch(), interrupts)
 
-    if subproc_task in pending_tasks:
-        pending_tasks.remove(subproc_task)
+    if subproc_task is not None:
         if not stop_event.is_set():
             LOG.info(f"Stopping {name} due to failing health checks")
         subproc.stop()
         await subproc_task
-
-    for pending_task in pending_tasks:
-        pending_task.cancel()
 
 
 async def _supervise(
