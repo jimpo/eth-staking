@@ -247,7 +247,7 @@ class ValidatorSupervisor(RpcTarget):
         for client in self._ssh_clients:
             with tempfile.NamedTemporaryFile(prefix="supervisor-backup", suffix=".bin", mode="w+b") as downloaded_f:
                 try:
-                    remote_path = f"~/{self._backup_filename}"
+                    remote_path = f"~/supervisor-backups/{self._backup_filename}"
                     if not await client.copy_remote_to_local(remote_path, downloaded_f.name):
                         LOG.warning(f"Failed to download scp backup from {client.node}")
                         continue
@@ -289,7 +289,7 @@ class ValidatorSupervisor(RpcTarget):
         LOG.debug(f"Saving backup to {self._backup_filename}")
         make_validator_data_backup(self._backup_key, self._backup_path, self._validator_canonical_dir)
         for client in self._ssh_clients:
-            remote_path = f"~/{self._backup_filename}"
+            remote_path = f"~/supervisor-backups/{self._backup_filename}"
             if await client.copy_local_to_remote(self._backup_path, remote_path):
                 LOG.debug(f"Uploaded scp backup to {client.node}")
             else:
