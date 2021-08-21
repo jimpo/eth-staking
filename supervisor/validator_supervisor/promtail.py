@@ -86,6 +86,11 @@ class Promtail(SimpleSubprocess):
             '--volume', f"{positions_volume_name}:/tmp/positions",
         ]
         for process_name, path in self.log_paths.items():
+            # Ensure file exists as a regular file or else Docker will create a directory at that
+            # path and fuck things up
+            if not os.path.exists(path):
+                with open(path, 'a') as _:
+                    pass
             cmd.extend([
                 '--volume',
                 f"{os.path.abspath(path)}:/var/log/validator-supervisor/{process_name}.log",
