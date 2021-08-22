@@ -20,6 +20,10 @@ Private configuration for different deployments are put in the deployments direc
 - `authorized_keys`: the SSH `authorized_keys` file for the bastion service
 - `validator-pubkeys.txt`: a list of your validators' public keys, one per line
 
+### FIDO/U2F-enabled MFA
+
+For FIDO/U2F-enabled MFA, generate an `ed25519-sk` or `ecdsa-sk` type SSH keypair, which is [natively supported](https://www.openssh.com/txt/release-8.2) by OpenSSH >= 8.2 and is so, so dope.
+
 ## Deployment
 
 To keep deployment simple and generalized, this targets an Ubuntu host OS and server initialization and updates are done with a single shell script, which is run with root privileges. These scripts are self-decompressing and themselves contain an archive of all data files. Some Docker images are built on the host, not pulled down from a remote registry.
@@ -39,3 +43,25 @@ and to build, run
 ```bash
 python3 -m doit
 ```
+
+## Grafana setup
+
+The Grafana setup is left as a mostly manual process for now. The Grafana server is not published on a host port, so it must be accessed through an SSH tunnel to the bastion
+
+```bash
+ssh -p 2222 -L 3000:grafana:3000 somebody@<HOSTNAME>
+```
+
+### Set up datasources
+
+On the left side bar, Configuration > Data Sources. Click "Add data source" button. Add Loki with URL `http://loki:3100`. Repeat and add Prometheus with URL `http://prometheus:9090`.
+
+### Set up dashboards
+
+For the Lighthouse node, see the official Lighthouse metrics repo: https://github.com/sigp/lighthouse-metrics/tree/master/dashboards.
+
+For the Prysm node, see https://docs.prylabs.network/docs/prysm-usage/monitoring/grafana-dashboard/#creating-and-importing-dashboards.
+
+### Set up alerting
+
+See https://grafana.com/docs/grafana/latest/alerting/.

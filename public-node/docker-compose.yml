@@ -3,8 +3,6 @@ services:
   grafana:
     build:
       context: ./images/grafana
-    ports:
-      - "127.0.0.1:3000:3000"
     volumes:
       - "grafana:/var/lib/grafana"
     links:
@@ -12,8 +10,6 @@ services:
       - prometheus
   loki:
     build: ./images/loki
-    ports:
-      - "127.0.0.1:3100:3100"
     volumes:
       - "loki:/var/lib/loki"
     command: ["-config.file=/etc/loki/config.yaml"]
