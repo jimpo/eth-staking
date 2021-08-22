@@ -203,13 +203,15 @@ class ValidatorSupervisor(RpcTarget):
         await self._rpc_server.stop()
         await self.stop_validator()
 
-        # Give Promtail a bit of time to finish uploading logs.
-        await asyncio.sleep(3)
+        if self._promtails:
+            LOG.debug("Stopping Promtails")
 
-        LOG.debug("Stopping Promtails")
-        stop_promtails.set()
-        if promtail_tasks:
-            await asyncio.wait(promtail_tasks)
+            # Give Promtail a bit of time to finish uploading logs.
+            await asyncio.sleep(3)
+
+            stop_promtails.set()
+            if promtail_tasks:
+                await asyncio.wait(promtail_tasks)
 
         LOG.debug("Stopping SSH tunnels")
         stop_ssh_tunnels.set()
@@ -379,10 +381,10 @@ class ValidatorSupervisor(RpcTarget):
         asyncio.create_task(self._poweroff_command())
 
     async def _poweroff_command(self) -> None:
-        LOG.info("Executing poweroff to shut down the host")
-        proc = await asyncio.create_subprocess_exec("poweroff")
+        LOG.info("Executing shutdown to shut down the host")
+        proc = await asyncio.create_subprocess_exec('sudo', 'shutdown', 'now')
         await proc.wait()
-        LOG.info(f"poweroff exited with status {proc.returncode}")
+        LOG.info(f"shutdown exited with status {proc.returncode}")
 
     @property
     def _backup_filename(self):
