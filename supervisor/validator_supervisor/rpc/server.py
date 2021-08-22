@@ -89,7 +89,7 @@ class RpcServer(object):
         await session.run()
 
     class _Session(ExitMixin):
-        METHODS = {'get_health', 'start_validator', 'stop_validator', 'connect',
+        METHODS = {'get_health', 'start_validator', 'stop_validator', 'connect', 'shutdown',
                    'begin_unlock', 'check_unlock', 'get_auth_challenge', 'auth'}
         UNAUTHENTICATED_METHODS = {'get_auth_challenge', 'auth'}
 

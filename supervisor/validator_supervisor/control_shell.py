@@ -128,6 +128,11 @@ class ControlShell(cmd.Cmd):
         else:
             print("Password is incorrect")
 
+    @_rpc_command
+    async def do_shutdown(self, conn: RpcClientConnection, _arg) -> None:
+        await conn.shutdown()
+        print("OK")
+
     def do_quit(self, _arg):
         return True
 

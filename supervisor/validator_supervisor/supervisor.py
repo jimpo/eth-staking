@@ -377,10 +377,10 @@ class ValidatorSupervisor(RpcTarget):
             return False
 
     async def shutdown(self) -> None:
-        """Executes the poweroff command on the system and powers down the machine."""
-        asyncio.create_task(self._poweroff_command())
+        """Executes the shutdown command on the system and powers down the machine."""
+        asyncio.create_task(self._shutdown_command())
 
-    async def _poweroff_command(self) -> None:
+    async def _shutdown_command(self) -> None:
         LOG.info("Executing shutdown to shut down the host")
         proc = await asyncio.create_subprocess_exec('sudo', 'shutdown', 'now')
         await proc.wait()
