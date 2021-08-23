@@ -9,7 +9,7 @@ RUN apt-get update && \
 
 ARG PORTABLE
 ENV PORTABLE $PORTABLE
-ARG COMMIT=3b600acdc5bf9726367c18277a22486573b8b457
+ARG COMMIT=90d5ab15660e62e16390731d92c74b640a70bed9
 RUN git clone https://github.com/sigp/lighthouse /lighthouse && \
     cd /lighthouse && \
     git checkout $COMMIT && \
