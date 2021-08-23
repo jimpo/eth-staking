@@ -15,6 +15,7 @@ DEPLOYMENT_CONFIG_FILEPATHS = ['network-name', 'authorized_keys', 'validator-pub
 
 class Eth2Network(Enum):
     MAINNET = "mainnet"
+    PRATER  = "prater"
     PYRMONT = "pyrmont"
 
 
@@ -23,11 +24,10 @@ def generate_docker_compose_file(deployment: str):
     with open('docker-compose.yml', 'r') as f:
         spec = yaml.load(f, Loader=yaml.Loader)
 
-    if network == Eth2Network.MAINNET:
-        for service in ('geth', 'lighthouse', 'prysm'):
-            if 'environment' not in spec['services'][service]:
-                spec['services'][service]['environment'] = {}
-            spec['services'][service]['environment']['MAINNET'] = 1
+    for service in ('geth', 'lighthouse', 'prysm'):
+        if 'environment' not in spec['services'][service]:
+            spec['services'][service]['environment'] = {}
+        spec['services'][service]['environment']['ETH2_NETWORK'] = network.value
 
     os.makedirs(f"generated/{deployment}", exist_ok=True)
     with open(f"generated/{deployment}/docker-compose.yml", 'w') as f:

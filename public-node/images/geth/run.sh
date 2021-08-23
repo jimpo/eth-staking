@@ -1,9 +1,18 @@
 #!/bin/bash
 
-network_flag="--goerli"
-if [[ "$MAINNET" -eq 1 ]] ; then
-    network_flag=""
-fi
+case "$ETH2_NETWORK" in
+    mainnet)
+        network_flag=""
+        ;;
+
+    pyrmont | prater)
+        network_flag="--goerli"
+        ;;
+
+    *)
+        echo "unknown network $ETH2_NETWORK" >&2
+        exit 1
+esac
 
 exec geth \
      --http \

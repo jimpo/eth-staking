@@ -1,9 +1,15 @@
 #!/bin/bash
 
-network_flag="--pyrmont"
-if [[ "$MAINNET" -eq 1 ]] ; then
-    network_flag="--mainnet"
-fi
+case "$ETH2_NETWORK" in
+    mainnet | pyrmont | prater)
+        network_flag="--$ETH2_NETWORK"
+        ;;
+
+    *)
+        echo "unknown network $ETH2_NETWORK" >&2
+        exit 1
+        ;;
+esac
 
 exec beacon-chain --accept-terms-of-use \
      $network_flag \
