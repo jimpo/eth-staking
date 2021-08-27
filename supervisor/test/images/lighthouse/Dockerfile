@@ -1,5 +1,4 @@
-# https://github.com/sigp/lighthouse/issues/2420
-FROM rust:1.52.1 AS builder
+FROM rust:1 AS builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -9,7 +8,7 @@ RUN apt-get update && \
 
 ARG PORTABLE
 ENV PORTABLE $PORTABLE
-ARG COMMIT=3b600acdc5bf9726367c18277a22486573b8b457
+ARG COMMIT=b0ac3464ca5fb1e9d75060b56c83bfaf990a3d25
 RUN git clone https://github.com/sigp/lighthouse /lighthouse && \
     cd /lighthouse && \
     git checkout $COMMIT && \

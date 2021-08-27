@@ -25,13 +25,13 @@ class LighthouseRelease:
 RELEASES: Dict[str, LighthouseRelease] = {
     release.version: release for release in
     (
-        LighthouseRelease("v1.4.0", "3b600acdc5bf9726367c18277a22486573b8b457"),
         LighthouseRelease("v1.5.0", "90d5ab15660e62e16390731d92c74b640a70bed9"),
+        LighthouseRelease("v1.5.1", "b0ac3464ca5fb1e9d75060b56c83bfaf990a3d25"),
     )
 }
 DEFAULT_VERSIONS = {
-    "mainnet": "v1.4.0",
-    "prater": "v1.5.0",
+    "mainnet": "v1.5.1",
+    "prater": "v1.5.1",
 }
 
 
