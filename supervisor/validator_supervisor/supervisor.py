@@ -195,6 +195,8 @@ class ValidatorSupervisor(RpcTarget):
             await self.start_validator()
         except UnlockRequired:
             LOG.info("Waiting for supervisor to be unlocked")
+        except Exception as err:
+            LOG.exception(f"Error starting supervisor", exc_info=err)
 
         await self._exit_event.wait()
         LOG.debug("Exiting")

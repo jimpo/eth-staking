@@ -74,7 +74,7 @@ async def build_docker_image(
     context_dir = resource_filename('validator_supervisor', f"images/{image_name}")
     LOG.debug(f"Building Docker image {image_tag}...")
 
-    build_cmd = ['docker', 'build']
+    build_cmd = ['docker', 'build', '--pull']
     if build_args:
         for key, val in build_args.items():
             build_cmd.extend(['--build-arg', f"{key}={val}"])

@@ -19,19 +19,19 @@ LOG = logging.getLogger(__name__)
 @dataclass
 class LighthouseRelease:
     version: str
-    commit_hash: str
+    # SHA256 checksum of the precompiled binary release
+    checksum: str
 
 
 RELEASES: Dict[str, LighthouseRelease] = {
     release.version: release for release in
     (
-        LighthouseRelease("v1.5.0", "90d5ab15660e62e16390731d92c74b640a70bed9"),
-        LighthouseRelease("v1.5.1", "b0ac3464ca5fb1e9d75060b56c83bfaf990a3d25"),
+        LighthouseRelease("v1.5.2", "924a5441c3fb6f01da75273290324af85aae2f66e84fdce1899e8b265176c782"),
     )
 }
 DEFAULT_VERSIONS = {
-    "mainnet": "v1.5.1",
-    "prater": "v1.5.1",
+    "mainnet": "v1.5.2",
+    "prater": "v1.5.2",
 }
 
 
@@ -73,7 +73,10 @@ class LighthouseValidator(ValidatorRunner):
         image_id = await build_docker_image(
             'lighthouse',
             self.release.version,
-            build_args={'COMMIT': self.release.commit_hash},
+            build_args={
+                'VERSION': self.release.version,
+                'CHECKSUM': self.release.checksum,
+            },
         )
         return await asyncio.subprocess.create_subprocess_exec(
             'docker', 'run', '--rm',
