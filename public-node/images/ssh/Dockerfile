@@ -7,8 +7,9 @@ RUN apt-get update && \
 
 # Host should only have one ED25519 SSH key
 RUN rm /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub && \
-    ssh-keygen -q -N "" -t ed25519 -f /etc/ssh/ssh_host_ed25519_key && \
-    echo "HostKey /etc/ssh/ssh_host_ed25519_key" >> /etc/ssh/sshd_config
+    mkdir /etc/ssh/host-keys && \
+    ssh-keygen -q -N "" -t ed25519 -f /etc/ssh/host-keys/ssh_host_ed25519_key && \
+    echo "HostKey /etc/ssh/host-keys/ssh_host_ed25519_key" >> /etc/ssh/sshd_config
 
 RUN mkdir /var/run/sshd
 

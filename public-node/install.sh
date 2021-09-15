@@ -77,7 +77,7 @@ mkdir /services
 
 # Initialize Docker services
 cp -r docker-compose.yml images authorized_keys validator-pubkeys.txt /services
-docker-compose --project-directory /services build
+docker-compose --project-directory /services build --pull
 
 # Configure Docker daemon
 # If docker-daemon.json changed, restart Docker service
