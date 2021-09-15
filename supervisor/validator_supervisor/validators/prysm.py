@@ -5,7 +5,7 @@ import os.path
 from typing import IO, Optional
 
 from ..backup_archive import check_validator_data_dir
-from ..util import build_docker_image
+from ..util import build_docker_image, set_sighup_on_parent_exit
 from .base import ValidatorRunner
 
 LOG = logging.getLogger(__name__)
@@ -35,4 +35,5 @@ class PrysmValidator(ValidatorRunner):
             image_id,
             stdout=out_log_file,
             stderr=err_log_file,
+            preexec_fn=set_sighup_on_parent_exit,
         )

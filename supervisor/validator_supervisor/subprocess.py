@@ -15,7 +15,7 @@ import os.path
 import time
 from typing import Awaitable, IO, List, Optional, Tuple
 
-from .util import either_or_interrupt
+from .util import either_or_interrupt, set_sighup_on_parent_exit
 
 LOG = logging.getLogger(__name__)
 FIRST_GRACE_PERIOD = 2

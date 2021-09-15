@@ -13,6 +13,10 @@ See Python module documentation for the `validator_supervisor.supervisor` module
 The package also includes an executable subcommand for remotely controlling the running validator
 supervisor through its RPC interface. The control command opens a shell interface.
 
+## System dependencies
+
+This targets Linux and requires libcap. On Debian/Ubuntu, install the `libcap-dev` package.
+
 ## Running
 
 To build the Python package, run

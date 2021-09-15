@@ -13,6 +13,7 @@ import datetime
 import logging
 import os.path
 import shutil
+import sys
 from ssl import SSLContext
 import tempfile
 from typing import Dict, List, Optional, Union

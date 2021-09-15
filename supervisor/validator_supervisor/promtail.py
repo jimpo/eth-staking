@@ -11,6 +11,7 @@ from typing import Dict, IO, Optional
 import yaml
 
 from .subprocess import SimpleSubprocess
+from .util import set_sighup_on_parent_exit
 
 LOG = logging.getLogger(__name__)
 
@@ -97,4 +98,9 @@ class Promtail(SimpleSubprocess):
             ])
         cmd.append('grafana/promtail')
 
-        return await asyncio.create_subprocess_exec(*cmd, stdout=out_log_file, stderr=err_log_file)
+        return await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=out_log_file,
+            stderr=err_log_file,
+            preexec_fn=set_sighup_on_parent_exit,
+        )

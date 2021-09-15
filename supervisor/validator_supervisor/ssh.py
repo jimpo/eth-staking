@@ -14,6 +14,7 @@ from typing import Iterable, IO, List, Optional, Union
 
 from .exceptions import InvalidSSHPubkey
 from .subprocess import SimpleSubprocess
+from .util import set_sighup_on_parent_exit
 
 SSH_DEFAULT_PORT = 22
 "SSH protocol default port"
@@ -241,7 +242,13 @@ class SSHTunnel(SimpleSubprocess):
             return None
 
         cmd = self.client.ssh_command(self.forwards)
-        proc = await asyncio.create_subprocess_exec(*cmd, stdin=PIPE, stdout=PIPE, stderr=DEVNULL)
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdin=PIPE,
+            stdout=PIPE,
+            stderr=DEVNULL,
+            preexec_fn=set_sighup_on_parent_exit
+        )
 
         # Tell type checker that stdout is defined since stdout=PIPE in create_subprocess_exec call.
         assert proc.stdout is not None

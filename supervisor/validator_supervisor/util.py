@@ -5,9 +5,11 @@ What, you think a project could exist without one?
 """
 
 import asyncio
+import signal
 from asyncio import Task, FIRST_COMPLETED
 import logging
 from pkg_resources import resource_filename
+import prctl
 from subprocess import PIPE
 from typing import Awaitable, Dict, List, Optional
 
@@ -91,3 +93,14 @@ async def build_docker_image(
     image_id = image_id_encoded.decode().strip()
     LOG.debug(f"Built Docker image {image_tag}: {image_id}")
     return image_id
+
+
+def set_sighup_on_parent_exit():
+    """
+    Use prctl to deliver SIGHUP to this process when the parent process exits.
+
+    This is intended to be run as the preexec_fn when spawning a subprocess.
+
+    See http://linux.die.net/man/2/prctl
+    """
+    prctl.set_pdeathsig(signal.SIGHUP)
