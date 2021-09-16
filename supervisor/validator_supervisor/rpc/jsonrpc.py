@@ -142,6 +142,10 @@ class RpcTarget(ABC):
         pass
 
     @abstractmethod
+    async def set_validator_release(self, impl_name: str, version: str, checksum: str):
+        pass
+
+    @abstractmethod
     async def unlock(self, password: str) -> bool:
         pass
 

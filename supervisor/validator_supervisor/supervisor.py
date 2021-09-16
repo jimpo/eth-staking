@@ -13,7 +13,6 @@ import datetime
 import logging
 import os.path
 import shutil
-import sys
 from ssl import SSLContext
 import tempfile
 from typing import Dict, List, Optional, Union
@@ -26,7 +25,7 @@ from .promtail import Promtail
 from .rpc.server import RpcServer, RpcTarget
 from .ssh import SSHForward, SSHClient, SSHTunnel, TcpSocket, UnixSocket
 from .subprocess import start_supervised, start_supervised_multi
-from .validators import LighthouseValidator, ValidatorRunner
+from .validators import ValidatorRelease, ValidatorRunner, create_validator_for_release
 
 LOG = logging.getLogger(__name__)
 
@@ -66,7 +65,6 @@ class ValidatorSupervisor(RpcTarget):
 
     _root_key: Optional[RootKey]
     _backup_key: Optional[bytes]
-    _validator: ValidatorRunner
     _exit_event: asyncio.Event
 
     def __init__(
@@ -138,13 +136,12 @@ class ValidatorSupervisor(RpcTarget):
         else:
             LOG.debug("Promtail disabled")
             self._promtails = []
-        self._validator = LighthouseValidator(
-            self.eth2_network,
-            os.path.join(self._validator_canonical_dir),
-            out_log_filepath=self.config.lighthouse_log_path,
-            err_log_filepath=self.config.lighthouse_log_path,
-            beacon_node_ports=[tunnel.local.port for tunnel in lighthouse_rpc_tunnels],
+        self._validator_release = ValidatorRelease(
+            "lighthouse",
+            "v1.5.2",
+            "924a5441c3fb6f01da75273290324af85aae2f66e84fdce1899e8b265176c782",
         )
+        self._validator: Optional[ValidatorRunner] = None
         self._validator_stop_event = asyncio.Event()
         self._validator_task: Optional[asyncio.Task] = None
 
@@ -236,7 +233,7 @@ class ValidatorSupervisor(RpcTarget):
         """
         if self._backup_key is None:
             raise UnlockRequired()
-        if self._validator.is_running():
+        if self._validator_task is not None:
             raise ValidatorRunning()
 
         latest_backup = None
@@ -288,7 +285,7 @@ class ValidatorSupervisor(RpcTarget):
         """
         if self._backup_key is None:
             raise UnlockRequired()
-        if self._validator.is_running():
+        if self._validator_task is not None:
             raise ValidatorRunning()
 
         LOG.debug(f"Saving backup to {self._backup_filename}")
@@ -313,6 +310,13 @@ class ValidatorSupervisor(RpcTarget):
             return False
 
         await self.load_backup()
+        self._validator = await create_validator_for_release(
+            self._validator_release,
+            self.eth2_network,
+            os.path.join(self._validator_canonical_dir),
+            out_log_filepath=self.config.lighthouse_log_path,
+            err_log_filepath=self.config.lighthouse_log_path,
+        )
         self._validator_stop_event = asyncio.Event()
         self._validator_task = await start_supervised(
             'validator',
@@ -335,9 +339,24 @@ class ValidatorSupervisor(RpcTarget):
 
         self._validator_stop_event.set()
         await self._validator_task
+        self._validator = None
         self._validator_task = None
         await self.save_backup()
         return True
+
+    async def set_validator_release(self, impl_name: str, version: str, checksum: str):
+        if self._validator_task is not None:
+            raise ValidatorRunning()
+
+        release = ValidatorRelease(impl_name, version, checksum)
+        _ = await create_validator_for_release(
+            release,
+            self.eth2_network,
+            os.path.join(self._validator_canonical_dir),
+            out_log_filepath=self.config.lighthouse_log_path,
+            err_log_filepath=self.config.lighthouse_log_path,
+        )
+        self._validator_release = release
 
     async def connect_eth2_node(self, host: str, port: Optional[int]):
         """

@@ -55,6 +55,10 @@ class RpcClient(RpcTarget):
         async with self.connect_and_auth() as conn:
             return await conn.stop_validator()
 
+    async def set_validator_release(self, impl_name: str, version: str, checksum: str):
+        async with self.connect_and_auth() as conn:
+            return await conn.set_validator_release(impl_name, version, checksum)
+
     async def connect_eth2_node(self, host: str, port: Optional[int]):
         async with self.connect_and_auth() as conn:
             return await conn.connect_eth2_node(host, port)
@@ -126,6 +130,9 @@ class RpcClientConnection(RpcTarget):
         if not isinstance(result, bool):
             raise BadRpcResponse("expected bool", result)
         return result
+
+    async def set_validator_release(self, impl_name: str, version: str, checksum: str):
+        await self._rpc_call('set_validator_release', [impl_name, version, checksum])
 
     async def connect_eth2_node(self, host: str, port: Optional[int]):
         pass

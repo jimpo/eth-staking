@@ -15,6 +15,7 @@ class MockRpcTarget(RpcTarget):
     start_validator = AsyncMock()
     stop_validator = AsyncMock()
     get_health = AsyncMock()
+    set_validator_release = AsyncMock()
     connect_eth2_node = AsyncMock()
     unlock = AsyncMock()
     shutdown = AsyncMock()

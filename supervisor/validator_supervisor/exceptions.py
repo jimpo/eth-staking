@@ -16,3 +16,7 @@ class ValidatorRunning(Exception):
 
 class DockerBuildException(Exception):
     pass
+
+
+class BadValidatorRelease(Exception):
+    pass
