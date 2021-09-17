@@ -23,6 +23,7 @@ from typing import AsyncGenerator, Callable, Coroutine, Optional, Union
 from .config import SSHConnInfo
 from .rpc.client import RpcClient, RpcClientConnection, BadRpcResponse, RpcError
 from .ssh import SSHClient, SSHForward, SSHTunnel, TcpSocket, UnixSocket
+from .validators import ValidatorRelease
 
 
 @asynccontextmanager
@@ -119,6 +120,18 @@ class ControlShell(cmd.Cmd):
             print("Validator has been stopped")
         else:
             print("Validator is not running")
+
+    @_rpc_command
+    async def do_set_validator_release(self, conn: RpcClientConnection, arg: str) -> None:
+        args = arg.split()
+        if len(args) != 3:
+            print("usage: set_validator_release {lighthouse,prysm} VERSION CHECKSUM")
+            return
+
+        release = ValidatorRelease(*args)
+        await conn.set_validator_release(release)
+        health_info = await conn.get_health()
+        pprint.pp(health_info)
 
     @_rpc_command
     async def do_unlock(self, conn: RpcClientConnection, _arg) -> None:
