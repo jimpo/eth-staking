@@ -78,8 +78,7 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
     async def asyncTearDown(self):
         self.exit_event.set()
         await self.supervisor_task
-        self.assertIsNotNone(self.supervisor._validator)
-        self.assertIsNone(self.supervisor._validator.get_pid())
+        self.assertIsNone(self.supervisor._validator)
 
         self.tmpdir.cleanup()
 

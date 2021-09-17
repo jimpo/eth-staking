@@ -16,6 +16,10 @@ RUN mkdir /var/run/sshd
 # Create unprivileged user
 RUN useradd -m somebody
 
+USER somebody
+RUN cd /home/somebody && mkdir .ssh supervisor-backups
+USER root
+
 COPY --chown=somebody:somebody authorized_keys /home/somebody/.ssh/authorized_keys
 
 EXPOSE 22

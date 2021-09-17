@@ -25,7 +25,8 @@ from .promtail import Promtail
 from .rpc.server import RpcServer, RpcTarget
 from .ssh import SSHForward, SSHClient, SSHTunnel, TcpSocket, UnixSocket
 from .subprocess import start_supervised, start_supervised_multi
-from .validators import ValidatorRelease, ValidatorRunner, create_validator_for_release
+from .validators import \
+    BeaconNodePortMap, ValidatorRelease, ValidatorRunner, create_validator_for_release
 
 LOG = logging.getLogger(__name__)
 
@@ -95,21 +96,37 @@ class ValidatorSupervisor(RpcTarget):
             os.path.join(self.config.data_dir, CONTROL_RPC_SOCKNAME),
         )
 
+        self._beacon_node_port_maps = [
+            BeaconNodePortMap(
+                lighthouse_rpc=self._alloc_port(),
+                prysm_rpc=self._alloc_port(),
+                prysm_grpc=self._alloc_port(),
+            )
+            for _ in config.nodes
+        ]
         port_maps: List[List[Union[SSHForward]]] = [
             [
-                SSHForward(TcpSocket.localhost(self._alloc_port()), TcpSocket('prysm', 3500)),
-                SSHForward(TcpSocket.localhost(self._alloc_port()), TcpSocket('prysm', 4000)),
-                SSHForward(TcpSocket.localhost(self._alloc_port()), TcpSocket('lighthouse', 5052)),
+                SSHForward(
+                    TcpSocket.localhost(beacon_node_port_map.prysm_rpc),
+                    TcpSocket('prysm', 3500),
+                ),
+                SSHForward(
+                    TcpSocket.localhost(beacon_node_port_map.prysm_grpc),
+                    TcpSocket('prysm', 4000),
+                ),
+                SSHForward(
+                    TcpSocket.localhost(beacon_node_port_map.lighthouse_rpc),
+                    TcpSocket('lighthouse', 5052),
+                ),
                 SSHForward(TcpSocket.localhost(self._alloc_port()), TcpSocket('loki', 3100)),
                 # Reverse tunnel to local SSH server
                 SSHForward(TcpSocket.localhost(22), TcpSocket.localhost(2222), reverse=True),
                 # Reverse tunnel to RPC server
                 SSHForward(UnixSocket(self.rpc_sock_path), TcpSocket.localhost(8000), reverse=True),
             ]
-            for _ in self.config.nodes
+            for beacon_node_port_map in self._beacon_node_port_maps
         ]
-        _prysm_gateway_tunnels, _prysm_rpc_tunnels, lighthouse_rpc_tunnels, loki_tunnels, _, _ = \
-            zip(*port_maps)
+        _, _, _, loki_tunnels, _, _ = zip(*port_maps)
         self._ssh_clients = [
             SSHClient(node, known_hosts_file, known_hosts_lock)
             for node in config.nodes
@@ -316,6 +333,7 @@ class ValidatorSupervisor(RpcTarget):
             os.path.join(self._validator_canonical_dir),
             out_log_filepath=self.config.lighthouse_log_path,
             err_log_filepath=self.config.lighthouse_log_path,
+            beacon_node_ports=self._beacon_node_port_maps,
         )
         self._validator_stop_event = asyncio.Event()
         self._validator_task = await start_supervised(
@@ -355,6 +373,7 @@ class ValidatorSupervisor(RpcTarget):
             os.path.join(self._validator_canonical_dir),
             out_log_filepath=self.config.lighthouse_log_path,
             err_log_filepath=self.config.lighthouse_log_path,
+            beacon_node_ports=[],
         )
         self._validator_release = release
 

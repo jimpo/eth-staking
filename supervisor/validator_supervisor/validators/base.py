@@ -14,6 +14,13 @@ class ValidatorRelease:
     checksum: str
 
 
+@dataclass
+class BeaconNodePortMap:
+    lighthouse_rpc: int
+    prysm_rpc: int
+    prysm_grpc: int
+
+
 class ValidatorRunner(SimpleSubprocess, ABC):
     def __init__(
             self,
@@ -21,16 +28,15 @@ class ValidatorRunner(SimpleSubprocess, ABC):
             datadir: str,
             out_log_filepath: str,
             err_log_filepath: str,
-            beacon_node_ports: List[int],
+            beacon_node_ports: List[BeaconNodePortMap],
             release: ValidatorRelease,
     ):
-
         super().__init__(out_log_filepath, err_log_filepath)
         self.eth2_network = eth2_network
         self.datadir = datadir
         self.release = release
         self.beacon_node_ports = beacon_node_ports
-        self._beacon_node_port: Optional[int] = None
+        self._beacon_node_port: Optional[BeaconNodePortMap] = None
 
     async def build_docker_image(self) -> str:
         return await build_docker_image(

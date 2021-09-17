@@ -9,17 +9,17 @@ from typing import IO, Optional
 
 from ..backup_archive import check_validator_data_dir
 from ..subprocess import HealthCheck
-from ..util import build_docker_image, set_sighup_on_parent_exit
-from .base import ValidatorRunner
+from ..util import set_sighup_on_parent_exit
+from .base import BeaconNodePortMap, ValidatorRunner
 
 LOG = logging.getLogger(__name__)
 
 
 class LighthouseValidator(ValidatorRunner):
-    async def _find_healthy_beacon_node(self) -> Optional[int]:
-        for port in self.beacon_node_ports:
-            if await _beacon_node_healthy(port):
-                return port
+    async def _find_healthy_beacon_node(self) -> Optional[BeaconNodePortMap]:
+        for port_map in self.beacon_node_ports:
+            if await _beacon_node_healthy(port_map):
+                return port_map
         return None
 
     async def _launch(
@@ -64,10 +64,10 @@ class LighthouseValidator(ValidatorRunner):
             return await _beacon_node_healthy(self.validator._beacon_node_port)
 
 
-async def _beacon_node_healthy(beacon_node_port: int) -> bool:
+async def _beacon_node_healthy(port_map: BeaconNodePortMap) -> bool:
     try:
         async with aiohttp.ClientSession() as session:
-            syncing_url = f"http://localhost:{beacon_node_port}/lighthouse/syncing"
+            syncing_url = f"http://localhost:{port_map.lighthouse_rpc}/lighthouse/syncing"
             async with session.get(syncing_url) as response:
                 if response.status != 200:
                     return False
