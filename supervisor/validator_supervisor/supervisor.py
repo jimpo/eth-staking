@@ -18,7 +18,7 @@ import tempfile
 from typing import Dict, List, Optional, Union
 
 from .backup_archive import BackupArchive, LockedArchiveCorrupted, make_validator_data_backup
-from .config import Config, ValidatorReleaseSchema
+from .config import Config, DynamicConfig, read_dynamic_config, write_dynamic_config
 from .exceptions import ValidatorRunning, UnlockRequired
 from .key_ops import RootKey, IncorrectPassword
 from .promtail import Promtail
@@ -26,7 +26,8 @@ from .rpc.server import RpcServer, RpcTarget
 from .ssh import SSHForward, SSHClient, SSHTunnel, TcpSocket, UnixSocket
 from .subprocess import start_supervised, start_supervised_multi
 from .validators import \
-    BeaconNodePortMap, ValidatorRelease, ValidatorRunner, create_validator_for_release
+    BeaconNodePortMap, ValidatorRelease, ValidatorRunner, ValidatorReleaseSchema, \
+    create_validator_for_release
 
 LOG = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ CANONICAL_DIR_NAME = 'canonical'
 SSH_KNOWN_HOSTS_FILENAME = 'ssh_known_hosts'
 CONTROL_RPC_SOCKNAME = 'rpc.sock'
 RETRY_DELAY = 10
+DYNAMIC_CONFIG_FILENAME = 'dynamic_config.yml'
 
 
 class ScpFailure(Exception):
@@ -82,6 +84,12 @@ class ValidatorSupervisor(RpcTarget):
 
         if not config.nodes:
             raise ValueError("config must have at least one node")
+
+        self._dynamic_config_path = os.path.join(config.data_dir, DYNAMIC_CONFIG_FILENAME)
+        if os.path.exists(self._dynamic_config_path):
+            self.dynamic_config = read_dynamic_config(self._dynamic_config_path)
+        else:
+            self.dynamic_config = DynamicConfig()
 
         self._validator_data_tmpdir = tempfile.TemporaryDirectory(
             prefix='validator_supervisor-validator_data',
@@ -323,7 +331,7 @@ class ValidatorSupervisor(RpcTarget):
 
         await self.load_backup()
         self._validator = await create_validator_for_release(
-            self.config.validator_release,
+            self.dynamic_config.validator_release,
             self.eth2_network,
             os.path.join(self._validator_canonical_dir),
             out_log_filepath=self.config.lighthouse_log_path,
@@ -369,7 +377,8 @@ class ValidatorSupervisor(RpcTarget):
             err_log_filepath=self.config.lighthouse_log_path,
             beacon_node_ports=[],
         )
-        self.config.validator_release = release
+        self.dynamic_config.validator_release = release
+        write_dynamic_config(self._dynamic_config_path, self.dynamic_config)
 
     async def connect_eth2_node(self, host: str, port: Optional[int]):
         """
@@ -394,7 +403,8 @@ class ValidatorSupervisor(RpcTarget):
         return {
             'unlocked': self.root_key is not None,
             'validator_running': self._validator_task is not None,
-            'validator_release': ValidatorReleaseSchema().dump(self.config.validator_release),
+            'validator_release':
+                ValidatorReleaseSchema().dump(self.dynamic_config.validator_release),
         }
 
     async def unlock(self, password: str) -> bool:

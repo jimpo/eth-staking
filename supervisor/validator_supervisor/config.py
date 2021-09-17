@@ -62,7 +62,6 @@ class Config:
     ssl_key_file: Optional[str]
     port_range: Tuple[int, int]
     rpc_users: Dict[str, str]
-    validator_release: ValidatorRelease = DEFAULT_VALIDATOR_RELEASE
     backup_filename: str = DEFAULT_BACKUP_FILENAME
 
     @property
@@ -80,6 +79,16 @@ class Config:
     @property
     def prysm_log_path(self) -> str:
         return os.path.join(self.logs_dir, PRYSM_LOG_NAME)
+
+
+@dataclass
+class DynamicConfig:
+    """
+    Validator supervisor configuration that can change dynamically at runtime.
+
+    This acts like a database of configuration state.
+    """
+    validator_release: ValidatorRelease = DEFAULT_VALIDATOR_RELEASE
 
 
 class KeyDescriptorSchema(marshmallow.Schema):
@@ -123,12 +132,22 @@ class ConfigSchema(marshmallow.Schema):
     ssl_key_file = fields.Str(missing=None)
     port_range = fields.Tuple((fields.Int(), fields.Int()), required=True)
     rpc_users = fields.Dict(keys=fields.Str(), values=fields.Str())
-    validator_release = fields.Nested(ValidatorReleaseSchema, default=DEFAULT_VALIDATOR_RELEASE)
     backup_filename = fields.Str(default=DEFAULT_BACKUP_FILENAME)
 
     @post_load
     def build(self, data, **_kwargs) -> Config:
         return Config(**data)
+
+
+class DynamicConfigSchema(marshmallow.Schema):
+    """
+    Serialization schema for DynamicConfig..
+    """
+    validator_release = fields.Nested(ValidatorReleaseSchema, default=DEFAULT_VALIDATOR_RELEASE)
+
+    @post_load
+    def build(self, data, **_kwargs) -> DynamicConfig:
+        return DynamicConfig(**data)
 
 
 def read_config(config_path: str) -> Config:
@@ -166,6 +185,44 @@ def write_config(config_path: str, config: Config):
     config_dict = ConfigSchema().dump(config)
     config_dict['version'] = 1
     with open(config_path, 'w') as f:
+        yaml.dump(config_dict, f)
+
+
+def read_dynamic_config(path: str) -> DynamicConfig:
+    """
+    Read and deserialize dynamic configuration state from a YAML file.
+
+    :param path: path to YAML file
+    :return: dynamic config struct
+    """
+    try:
+        with open(path, 'rb') as f:
+            config_dict = yaml.load(f, Loader=yaml.Loader)
+    except FileNotFoundError:
+        raise InvalidConfig(f"dynamic config file not found at {path}")
+    except yaml.parser.ParserError:
+        raise InvalidConfig("dynamic config file is not valid YAML")
+
+    version = config_dict.pop('version', 1)
+    if version == 1:
+        try:
+            return DynamicConfigSchema().load(config_dict)
+        except marshmallow.exceptions.ValidationError as err:
+            raise InvalidConfig(err.args) from err
+    else:
+        raise InvalidConfig(f"unsupported dynamic config version {version}")
+
+
+def write_dynamic_config(path: str, config: DynamicConfig):
+    """
+    Serialize and write configuration struct to a YAML file.
+
+    :param path: path to the YAML file
+    :param config: dynamic config struct
+    """
+    config_dict = DynamicConfigSchema().dump(config)
+    config_dict['version'] = 1
+    with open(path, 'w') as f:
         yaml.dump(config_dict, f)
 
 
