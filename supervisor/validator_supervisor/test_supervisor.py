@@ -10,6 +10,7 @@ from .exceptions import MissingValidatorData
 from .key_ops import KeyDescriptor
 from .ssh import SSHConnInfo
 from .supervisor import ValidatorSupervisor
+from .validators import ValidatorRelease
 
 ETH2_NETWORK = 'pyrmont'
 PASSWORD = 'password123'
@@ -99,6 +100,15 @@ class ValidatorSupervisorTest(unittest.IsolatedAsyncioTestCase):
         os.unlink(os.path.join(self.data_dir, self.backup_filename))
         success = await self.supervisor.load_backup()
         self.assertTrue(success)
+
+    async def test_set_validator_release(self):
+        old_release = ValidatorRelease(
+            impl_name='lighthouse',
+            version='v1.5.1',
+            checksum='a44ecaf9a5f956e9e43928252d6471a2eb6dc59245a5747e4fb545d512522768',
+        )
+        await self.supervisor.set_validator_release(old_release)
+        self.assertEqual(self.supervisor.config.validator_release, old_release)
 
 
 if __name__ == '__main__':

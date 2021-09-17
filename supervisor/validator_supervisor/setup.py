@@ -8,7 +8,9 @@ import sys
 from typing import Optional, Tuple
 
 from .backup_archive import make_validator_data_backup
-from .config import DEFAULT_BACKUP_FILENAME, Config, InvalidConfig, read_config, write_config
+from .config import \
+    DEFAULT_VALIDATOR_RELEASE, DEFAULT_BACKUP_FILENAME, Config, InvalidConfig, \
+    read_config, write_config
 from .exceptions import MissingValidatorData
 from .key_ops import KeyDescriptor, IncorrectPassword, RootKey
 from .rpc.auth import gen_user_key
@@ -123,6 +125,7 @@ def init_config(config_path: str) -> Tuple[Config, RootKey]:
     ssl_key_file = old_config.ssl_key_file if old_config else None
     port_range = old_config.port_range if old_config else DEFAULT_PORT_RANGE
     rpc_users = old_config.rpc_users if old_config else {}
+    validator_release = old_config.validator_release if old_config else DEFAULT_VALIDATOR_RELEASE
     backup_filename = old_config.backup_filename if old_config else DEFAULT_BACKUP_FILENAME
 
     updated = False
@@ -145,6 +148,7 @@ def init_config(config_path: str) -> Tuple[Config, RootKey]:
         ssl_key_file=ssl_key_file,
         port_range=port_range,
         rpc_users=rpc_users,
+        validator_release=validator_release,
         backup_filename=backup_filename,
     )
     if not updated and config == old_config:

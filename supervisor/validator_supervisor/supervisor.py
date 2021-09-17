@@ -18,7 +18,7 @@ import tempfile
 from typing import Dict, List, Optional, Union
 
 from .backup_archive import BackupArchive, LockedArchiveCorrupted, make_validator_data_backup
-from .config import Config
+from .config import Config, ValidatorReleaseSchema
 from .exceptions import ValidatorRunning, UnlockRequired
 from .key_ops import RootKey, IncorrectPassword
 from .promtail import Promtail
@@ -153,11 +153,6 @@ class ValidatorSupervisor(RpcTarget):
         else:
             LOG.debug("Promtail disabled")
             self._promtails = []
-        self._validator_release = ValidatorRelease(
-            "lighthouse",
-            "v1.5.2",
-            "924a5441c3fb6f01da75273290324af85aae2f66e84fdce1899e8b265176c782",
-        )
         self._validator: Optional[ValidatorRunner] = None
         self._validator_stop_event = asyncio.Event()
         self._validator_task: Optional[asyncio.Task] = None
@@ -328,7 +323,7 @@ class ValidatorSupervisor(RpcTarget):
 
         await self.load_backup()
         self._validator = await create_validator_for_release(
-            self._validator_release,
+            self.config.validator_release,
             self.eth2_network,
             os.path.join(self._validator_canonical_dir),
             out_log_filepath=self.config.lighthouse_log_path,
@@ -362,11 +357,10 @@ class ValidatorSupervisor(RpcTarget):
         await self.save_backup()
         return True
 
-    async def set_validator_release(self, impl_name: str, version: str, checksum: str):
+    async def set_validator_release(self, release: ValidatorRelease):
         if self._validator_task is not None:
             raise ValidatorRunning()
 
-        release = ValidatorRelease(impl_name, version, checksum)
         _ = await create_validator_for_release(
             release,
             self.eth2_network,
@@ -375,7 +369,7 @@ class ValidatorSupervisor(RpcTarget):
             err_log_filepath=self.config.lighthouse_log_path,
             beacon_node_ports=[],
         )
-        self._validator_release = release
+        self.config.validator_release = release
 
     async def connect_eth2_node(self, host: str, port: Optional[int]):
         """
@@ -400,6 +394,7 @@ class ValidatorSupervisor(RpcTarget):
         return {
             'unlocked': self.root_key is not None,
             'validator_running': self._validator_task is not None,
+            'validator_release': ValidatorReleaseSchema().dump(self.config.validator_release),
         }
 
     async def unlock(self, password: str) -> bool:

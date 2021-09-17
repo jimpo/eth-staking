@@ -13,6 +13,7 @@ import yaml.parser
 from .key_ops import KeyDescriptor, RootKey
 from .exceptions import UnlockRequired
 from .ssh import SSHConnInfo, DEFAULT_BASTION_SSH_USER, DEFAULT_BASTION_SSH_PORT
+from .validators import ValidatorRelease, ValidatorReleaseSchema
 
 CONFIG_VERSION = 1
 SUPERVISOR_LOG_NAME = 'supervisor.log'
@@ -20,6 +21,11 @@ LIGHTHOUSE_LOG_NAME = 'lighthouse.log'
 PRYSM_LOG_NAME = 'prysm.log'
 
 DEFAULT_BACKUP_FILENAME = 'supervisor-backup.bin'
+DEFAULT_VALIDATOR_RELEASE = ValidatorRelease(
+    impl_name='lighthouse',
+    version='v1.5.2',
+    checksum='924a5441c3fb6f01da75273290324af85aae2f66e84fdce1899e8b265176c782',
+)
 
 
 class InvalidConfig(Exception):
@@ -56,6 +62,7 @@ class Config:
     ssl_key_file: Optional[str]
     port_range: Tuple[int, int]
     rpc_users: Dict[str, str]
+    validator_release: ValidatorRelease = DEFAULT_VALIDATOR_RELEASE
     backup_filename: str = DEFAULT_BACKUP_FILENAME
 
     @property
@@ -116,6 +123,7 @@ class ConfigSchema(marshmallow.Schema):
     ssl_key_file = fields.Str(missing=None)
     port_range = fields.Tuple((fields.Int(), fields.Int()), required=True)
     rpc_users = fields.Dict(keys=fields.Str(), values=fields.Str())
+    validator_release = fields.Nested(ValidatorReleaseSchema, default=DEFAULT_VALIDATOR_RELEASE)
     backup_filename = fields.Str(default=DEFAULT_BACKUP_FILENAME)
 
     @post_load

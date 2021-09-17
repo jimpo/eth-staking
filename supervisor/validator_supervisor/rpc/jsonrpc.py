@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import random
 from typing import Dict, Optional
 
+from ..validators import ValidatorRelease
 
 ID_LIMIT = 10000
 BEGIN_UNLOCK_RESULT = "ENTER PASSPHRASE"
@@ -142,7 +143,7 @@ class RpcTarget(ABC):
         pass
 
     @abstractmethod
-    async def set_validator_release(self, impl_name: str, version: str, checksum: str):
+    async def set_validator_release(self, release: ValidatorRelease):
         pass
 
     @abstractmethod

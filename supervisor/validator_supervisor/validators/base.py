@@ -1,5 +1,7 @@
 from abc import ABC
 from dataclasses import dataclass
+import marshmallow
+from marshmallow import fields, post_load
 from typing import List, Optional
 
 from ..subprocess import SimpleSubprocess
@@ -12,6 +14,19 @@ class ValidatorRelease:
     version: str
     # SHA256 checksum of the precompiled binary release
     checksum: str
+
+
+class ValidatorReleaseSchema(marshmallow.Schema):
+    """
+    Serialization schema for ValidatorRelease.
+    """
+    impl_name = fields.Str(required=True)
+    version = fields.Str(required=True)
+    checksum = fields.Str(required=True)
+
+    @post_load
+    def build(self, data, **_kwargs) -> ValidatorRelease:
+        return ValidatorRelease(**data)
 
 
 @dataclass

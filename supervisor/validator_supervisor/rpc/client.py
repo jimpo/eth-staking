@@ -15,6 +15,7 @@ from typing import Any, AsyncGenerator, Dict, Optional
 from .auth import auth_response
 from .jsonrpc import \
     BEGIN_UNLOCK_RESULT, JsonRpcRequest, JsonRpcResponse, RpcTarget, MalformedJsonRpc
+from ..validators import ValidatorRelease, ValidatorReleaseSchema
 
 
 class BadRpcResponse(Exception):
@@ -55,9 +56,9 @@ class RpcClient(RpcTarget):
         async with self.connect_and_auth() as conn:
             return await conn.stop_validator()
 
-    async def set_validator_release(self, impl_name: str, version: str, checksum: str):
+    async def set_validator_release(self, release: ValidatorRelease):
         async with self.connect_and_auth() as conn:
-            return await conn.set_validator_release(impl_name, version, checksum)
+            return await conn.set_validator_release(release)
 
     async def connect_eth2_node(self, host: str, port: Optional[int]):
         async with self.connect_and_auth() as conn:
@@ -131,8 +132,11 @@ class RpcClientConnection(RpcTarget):
             raise BadRpcResponse("expected bool", result)
         return result
 
-    async def set_validator_release(self, impl_name: str, version: str, checksum: str):
-        await self._rpc_call('set_validator_release', [impl_name, version, checksum])
+    async def set_validator_release(self, release: ValidatorRelease):
+        await self._rpc_call(
+            'set_validator_release',
+            ValidatorReleaseSchema().dump(release),
+        )
 
     async def connect_eth2_node(self, host: str, port: Optional[int]):
         pass

@@ -13,6 +13,7 @@ from .rpc.client import RpcClient
 from .ssh import SSHConnInfo
 from .key_ops import KeyDescriptor
 from .supervisor import ValidatorSupervisor
+from .validators import ValidatorRelease
 
 ETH2_NETWORK = 'pyrmont'
 PASSWORD = 'password123'
@@ -124,6 +125,23 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
 
         with self.assertRaises(ConnectionRefusedError):
             await self.remote_control.get_health()
+
+    async def test_set_validator_release(self):
+        await self._wait_for_validator_running(timeout=5)
+        lighthouse_pid = self.supervisor._validator.get_pid()
+        self.assertIsNotNone(lighthouse_pid)
+
+        resp = await asyncio.wait_for(self.remote_control.stop_validator(), timeout=15)
+        self.assertTrue(resp)
+
+        old_release = ValidatorRelease(
+            impl_name='lighthouse',
+            version='v1.5.1',
+            checksum='a44ecaf9a5f956e9e43928252d6471a2eb6dc59245a5747e4fb545d512522768',
+        )
+        await self.remote_control.set_validator_release(old_release)
+        health_resp = await self.remote_control.get_health()
+        self.assertEqual(health_resp['validator_release']['version'], old_release.version)
 
     async def _wait_for_validator_running(self, timeout: float):
         poll_interval = 0.1

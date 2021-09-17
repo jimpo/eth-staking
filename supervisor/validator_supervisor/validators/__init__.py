@@ -2,7 +2,7 @@
 
 from typing import List
 
-from .base import BeaconNodePortMap, ValidatorRelease, ValidatorRunner
+from .base import BeaconNodePortMap, ValidatorRelease, ValidatorRunner, ValidatorReleaseSchema
 from .lighthouse import LighthouseValidator
 from .prysm import PrysmValidator
 from ..exceptions import BadValidatorRelease, DockerBuildException

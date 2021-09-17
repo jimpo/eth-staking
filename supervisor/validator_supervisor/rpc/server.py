@@ -15,6 +15,7 @@ from .auth import gen_auth_challenge, check_auth_response
 from .jsonrpc import \
     BEGIN_UNLOCK_RESULT, JsonRpcRequest, JsonRpcResponse, MalformedJsonRpc, RpcTarget
 from ..util import ExitMixin
+from ..validators import ValidatorRelease, ValidatorReleaseSchema
 
 LOG = logging.getLogger(__name__)
 
@@ -90,7 +91,8 @@ class RpcServer(object):
 
     class _Session(ExitMixin):
         METHODS = {'get_health', 'start_validator', 'stop_validator', 'connect', 'shutdown',
-                   'begin_unlock', 'check_unlock', 'get_auth_challenge', 'auth'}
+                   'begin_unlock', 'check_unlock', 'get_auth_challenge', 'auth',
+                   'set_validator_release'}
         UNAUTHENTICATED_METHODS = {'get_auth_challenge', 'auth'}
 
         _password: Optional[bytes]
@@ -256,3 +258,11 @@ class RpcServer(object):
         async def _handle_get_health(self, _params: object) -> Tuple[bool, object]:
             result = await self.target.get_health()
             return True, result
+
+        async def _handle_set_validator_release(self, params: object) -> Tuple[bool, object]:
+            if not isinstance(params, dict):
+                return False, "params must be an JSON object"
+
+            release = ValidatorReleaseSchema().load(params)
+            await self.target.set_validator_release(release)
+            return True, None
