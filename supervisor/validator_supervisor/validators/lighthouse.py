@@ -39,7 +39,7 @@ class LighthouseValidator(ValidatorRunner):
             'docker', 'run', '--rm',
             '--name', f"validator-supervisor_{os.getpid()}_lighthouse",
             '-e', f"ETH2_NETWORK={self.eth2_network}",
-            '-e', f"BEACON_NODES=http://localhost:{self._beacon_node_port}",
+            '-e', f"BEACON_NODES=http://localhost:{self._beacon_node_port.lighthouse_rpc}",
             '--net', 'host',
             '--volume', f"{os.path.abspath(self.datadir)}:/app/canonical",
             '--tmpfs', "/app/lighthouse",
