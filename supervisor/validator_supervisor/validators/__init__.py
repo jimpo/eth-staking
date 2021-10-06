@@ -1,6 +1,6 @@
 """Ethereum 2.0 validator implementation runners."""
 
-from typing import List
+from typing import Dict, List, Type
 
 from .base import BeaconNodePortMap, ValidatorRelease, ValidatorRunner, ValidatorReleaseSchema
 from .lighthouse import LighthouseValidator
@@ -8,7 +8,7 @@ from .prysm import PrysmValidator
 from ..exceptions import BadValidatorRelease, DockerBuildException
 
 
-_VALIDATOR_CLASSES = {
+_VALIDATOR_CLASSES: Dict[str, Type[ValidatorRunner]] = {
     'lighthouse': LighthouseValidator,
     'prysm': PrysmValidator,
 }

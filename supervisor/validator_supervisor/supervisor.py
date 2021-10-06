@@ -107,7 +107,7 @@ class ValidatorSupervisor(RpcTarget):
         self._beacon_node_port_maps = [
             BeaconNodePortMap(
                 lighthouse_rpc=self._alloc_port(),
-                prysm_rpc=self._alloc_port(),
+                prysm_http=self._alloc_port(),
                 prysm_grpc=self._alloc_port(),
             )
             for _ in config.nodes
@@ -115,7 +115,7 @@ class ValidatorSupervisor(RpcTarget):
         port_maps: List[List[Union[SSHForward]]] = [
             [
                 SSHForward(
-                    TcpSocket.localhost(beacon_node_port_map.prysm_rpc),
+                    TcpSocket.localhost(beacon_node_port_map.prysm_http),
                     TcpSocket('prysm', 3500),
                 ),
                 SSHForward(

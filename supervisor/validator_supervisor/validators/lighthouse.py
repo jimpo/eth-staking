@@ -7,8 +7,6 @@ import logging
 import os
 from typing import IO, Optional
 
-from ..backup_archive import check_validator_data_dir
-from ..subprocess import HealthCheck
 from ..util import set_sighup_on_parent_exit
 from .base import BeaconNodePortMap, ValidatorRunner
 
@@ -16,64 +14,47 @@ LOG = logging.getLogger(__name__)
 
 
 class LighthouseValidator(ValidatorRunner):
-    async def _find_healthy_beacon_node(self) -> Optional[BeaconNodePortMap]:
-        for port_map in self.beacon_node_ports:
-            if await _beacon_node_healthy(port_map):
-                return port_map
-        return None
-
-    async def _launch(
+    async def _launch_validator(
             self,
+            docker_image_id: str,
+            beacon_node_port: BeaconNodePortMap,
             out_log_file: Optional[IO[str]],
             err_log_file: Optional[IO[str]],
     ) -> Optional[Process]:
-        check_validator_data_dir(self.datadir)
-
-        self._beacon_node_port = await self._find_healthy_beacon_node()
-        if self._beacon_node_port is None:
-            LOG.warning("No healthy lighthouse beacon nodes found")
-            return None
-
-        image_id = await self.build_docker_image()
         return await asyncio.subprocess.create_subprocess_exec(
             'docker', 'run', '--rm',
-            '--name', f"validator-supervisor_{os.getpid()}_lighthouse",
+            # Docker container name acts like a simple mutex
+            '--name', f"validator-supervisor_validator",
             '-e', f"ETH2_NETWORK={self.eth2_network}",
-            '-e', f"BEACON_NODES=http://localhost:{self._beacon_node_port.lighthouse_rpc}",
+            '-e', f"BEACON_NODES=http://localhost:{beacon_node_port.lighthouse_rpc}",
             '--net', 'host',
             '--volume', f"{os.path.abspath(self.datadir)}:/app/canonical",
             '--tmpfs', "/app/lighthouse",
             '--user', str(os.getuid()),
-            image_id,
+            docker_image_id,
             stdout=out_log_file,
             stderr=err_log_file,
             preexec_fn=set_sighup_on_parent_exit,
         )
 
-    def health_check(self) -> Optional[HealthCheck]:
-        return self._HealthCheck(self, interval=10, retries=2)
+    @classmethod
+    async def _beacon_node_healthy(cls, port_map: BeaconNodePortMap) -> bool:
+        try:
+            async with aiohttp.ClientSession() as session:
+                syncing_url = f"http://localhost:{port_map.lighthouse_rpc}/eth/v1/node/syncing"
+                async with session.get(syncing_url) as response:
+                    if response.status != 200:
+                        return False
 
-    class _HealthCheck(HealthCheck):
-        def __init__(self, validator: LighthouseValidator, interval: float, retries: int):
-            super().__init__(interval, retries)
-            self.validator = validator
+                    payload = await response.json()
+                    if not isinstance(payload, dict):
+                        return False
 
-        async def is_ok(self) -> bool:
-            if self.validator._beacon_node_port is None:
-                return False
-            return await _beacon_node_healthy(self.validator._beacon_node_port)
+                    data = payload.get('data')
+                    if not isinstance(data, dict):
+                        return False
 
+                    return data.get('is_syncing', None) is False
 
-async def _beacon_node_healthy(port_map: BeaconNodePortMap) -> bool:
-    try:
-        async with aiohttp.ClientSession() as session:
-            syncing_url = f"http://localhost:{port_map.lighthouse_rpc}/lighthouse/syncing"
-            async with session.get(syncing_url) as response:
-                if response.status != 200:
-                    return False
-
-                payload = await response.json()
-                return isinstance(payload, dict) and payload.get('data') == 'Synced'
-
-    except aiohttp.ClientConnectionError:
-        return False
+        except aiohttp.ClientConnectionError:
+            return False

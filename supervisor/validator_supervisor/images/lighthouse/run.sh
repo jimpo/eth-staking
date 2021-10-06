@@ -40,10 +40,11 @@ trap sigterm_handler SIGTERM
 set +e
 wait $validator_pid
 retcode=$?
+set -e
 
 lighthouse account validator slashing-protection export \
     --datadir $LIGHTHOUSE_DIR \
     --network "$ETH2_NETWORK" \
     $CANONICAL_DIR/slashing-protection.json
 
-exit $?
+exit $retcode

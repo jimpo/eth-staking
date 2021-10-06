@@ -14,9 +14,9 @@ RUN gpg --import /tmp/prylabs_pgp_release_key.asc && \
     rm /tmp/prylabs_pgp_release_key.asc
 
 ARG ARCH=amd64
-ARG VERSION=v1.4.4
+ARG VERSION=v2.0.0
 ARG BINNAME=validator
-ARG CHECKSUM=e768370224008d2c7992b9a00d202d2ec9f1e68441dcef420cf32705f7b28393
+ARG CHECKSUM=312166c8e6352d6ba8f41d106894b567ec5efa3e9ad5e6f113e7746259b847c0
 RUN cd /tmp && \
     curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-linux-$ARCH && \
     curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-linux-$ARCH.sig && \
@@ -38,4 +38,4 @@ RUN chmod 0777 /app/prysm
 COPY run.sh /app/
 
 USER nobody
-CMD ["./run.sh"]
+CMD ["/app/run.sh"]

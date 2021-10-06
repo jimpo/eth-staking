@@ -1,17 +1,22 @@
 FROM rust:1 AS builder
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        cmake && \
+    apt-get install -y \
+        cmake gpg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+ARG MAINTAINER_GPG_KEYSERVER=keyserver.ubuntu.com
+ARG MAINTAINER_GPG_FINGERPRINT=0xCAA9A2685516A030F66A0AD877B1309D2E54E914
+RUN gpg --keyserver $MAINTAINER_GPG_KEYSERVER --recv-keys $MAINTAINER_GPG_FINGERPRINT
+
 ARG PORTABLE=0
 ENV PORTABLE $PORTABLE
-ARG COMMIT=f9bba92db3468321b28ddd9010e26b359f88bafe
+ARG TAG_REF=9b3b83dbfd759efc60b7f6e80dcd577902b2cadb
 RUN git clone https://github.com/sigp/lighthouse /lighthouse && \
     cd /lighthouse && \
-    git checkout $COMMIT && \
+    git checkout $TAG_REF && \
+    git verify-tag $TAG_REF && \
     make install && \
     make install-lcli
 
