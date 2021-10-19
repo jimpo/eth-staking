@@ -14,7 +14,7 @@ RUN gpg --import /tmp/prylabs_pgp_release_key.asc && \
     rm /tmp/prylabs_pgp_release_key.asc
 
 ARG ARCH=amd64
-ARG VERSION=v1.4.4
+ARG VERSION=v2.0.2
 ARG BINNAME=beacon-chain
 RUN cd /tmp && \
     curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-linux-$ARCH && \
@@ -34,5 +34,5 @@ COPY run.sh /home/somebody/
 
 RUN mkdir /home/somebody/.eth2
 
-EXPOSE 3501 4000 8080
+EXPOSE 3500 4000 8080
 ENTRYPOINT ["./run.sh"]

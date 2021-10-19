@@ -6,13 +6,12 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ARG MAINTAINER_GPG_KEYSERVER=keyserver.ubuntu.com
-ARG MAINTAINER_GPG_FINGERPRINT=0xCAA9A2685516A030F66A0AD877B1309D2E54E914
-RUN gpg --keyserver $MAINTAINER_GPG_KEYSERVER --recv-keys $MAINTAINER_GPG_FINGERPRINT
+RUN curl -L https://github.com/michaelsproul.gpg | gpg --import
+RUN curl -L https://github.com/paulhauner.gpg | gpg --import
 
 ARG PORTABLE=0
 ENV PORTABLE $PORTABLE
-ARG TAG_REF=9b3b83dbfd759efc60b7f6e80dcd577902b2cadb
+ARG TAG_REF=91851946e56ee85d757216a4804f084a2efd0cf8
 RUN git clone https://github.com/sigp/lighthouse /lighthouse && \
     cd /lighthouse && \
     git checkout $TAG_REF && \
