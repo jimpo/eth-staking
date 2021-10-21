@@ -92,8 +92,7 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_lighthouse_is_running_on_start(self):
         await self._wait_for_validator_running(timeout=5)
-        lighthouse_pid = self.supervisor._validator.get_pid()
-        self.assertIsNotNone(lighthouse_pid)
+        lighthouse_pid = await self._wait_for_validator_process_running(timeout=5)
 
         result_proc = subprocess.run(
             ["ps", "--pid", str(lighthouse_pid), "-o", "command"],
@@ -107,8 +106,7 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_remotely_stop_validator(self):
         await self._wait_for_validator_running(timeout=5)
-        lighthouse_pid = self.supervisor._validator.get_pid()
-        self.assertIsNotNone(lighthouse_pid)
+        lighthouse_pid = await self._wait_for_validator_process_running(timeout=5)
 
         resp = await asyncio.wait_for(self.remote_control.stop_validator(), timeout=15)
         self.assertTrue(resp)
@@ -128,8 +126,6 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_set_validator_release(self):
         await self._wait_for_validator_running(timeout=5)
-        lighthouse_pid = self.supervisor._validator.get_pid()
-        self.assertIsNotNone(lighthouse_pid)
 
         resp = await asyncio.wait_for(self.remote_control.stop_validator(), timeout=15)
         self.assertTrue(resp)
@@ -155,6 +151,18 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
             return
 
         self.fail("timed out waiting for validator to start")
+
+    async def _wait_for_validator_process_running(self, timeout: float) -> int:
+        poll_interval = 0.1
+        for i in range(int(timeout / poll_interval)):
+            await asyncio.sleep(poll_interval)
+            lighthouse_pid = self.supervisor._validator.get_pid()
+            print(lighthouse_pid)
+            if lighthouse_pid is None:
+                continue
+            return lighthouse_pid
+
+        self.fail("timed out waiting for validator process to start")
 
 
 if __name__ == '__main__':

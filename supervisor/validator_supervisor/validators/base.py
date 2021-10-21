@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import sys
 from abc import ABC, abstractmethod
+import asyncio.subprocess
 from asyncio.subprocess import Process
 from dataclasses import dataclass
 import logging
 import marshmallow
 from marshmallow import fields, post_load
+import os
 from typing import IO, List, Optional
 
 from ..backup_archive import check_validator_data_dir
 from ..subprocess import HealthCheck, SimpleSubprocess
-from ..util import build_docker_image
+from ..util import build_docker_image, set_sighup_on_parent_exit
 
 LOG = logging.getLogger(__name__)
 
@@ -88,22 +91,23 @@ class ValidatorRunner(SimpleSubprocess, ABC):
             LOG.warning("No healthy beacon nodes found")
             return None
 
-        image_id = await self.build_docker_image()
-        return await self._launch_validator(
-            image_id,
-            self._beacon_node_port,
-            out_log_file,
-            err_log_file,
+        docker_image_id = await self.build_docker_image()
+        docker_opts = await self._launch_docker_opts(self._beacon_node_port)
+        return await asyncio.subprocess.create_subprocess_exec(
+            'docker', 'run', '--rm',
+            # Docker container name acts like a simple mutex
+            '--name', f"validator-supervisor_validator",
+            *docker_opts,
+            '--net', 'host',
+            '--user', str(os.getuid()),
+            docker_image_id,
+            stdout=out_log_file,
+            stderr=err_log_file,
+            preexec_fn=set_sighup_on_parent_exit,
         )
 
     @abstractmethod
-    async def _launch_validator(
-            self,
-            docker_image_id: str,
-            beacon_node_port: BeaconNodePortMap,
-            out_log_file: Optional[IO[str]],
-            err_log_file: Optional[IO[str]],
-    ) -> Optional[Process]:
+    async def _launch_docker_opts(self, port_map: BeaconNodePortMap) -> List[str]:
         pass
 
     @classmethod

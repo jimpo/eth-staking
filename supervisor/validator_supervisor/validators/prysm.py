@@ -1,40 +1,22 @@
 import aiohttp
-import asyncio
-from asyncio.subprocess import Process
 import logging
 import os.path
-from typing import IO, Optional
+from typing import List
 
-from ..util import set_sighup_on_parent_exit
 from .base import BeaconNodePortMap, ValidatorRunner
 
 LOG = logging.getLogger(__name__)
 
 
 class PrysmValidator(ValidatorRunner):
-    async def _launch_validator(
-            self,
-            docker_image_id: str,
-            beacon_node_port: BeaconNodePortMap,
-            out_log_file: Optional[IO[str]],
-            err_log_file: Optional[IO[str]],
-    ) -> Optional[Process]:
-        return await asyncio.subprocess.create_subprocess_exec(
-            'docker', 'run', '--rm',
-            # Docker container name acts like a simple mutex
-            '--name', f"validator-supervisor_validator",
+    async def _launch_docker_opts(self, port_map: BeaconNodePortMap) -> List[str]:
+        return [
             '-e', f"ETH2_NETWORK={self.eth2_network}",
-            '-e', f"BEACON_HTTP_ENDPOINT=localhost:{beacon_node_port.prysm_http}",
-            '-e', f"BEACON_GRPC_ENDPOINT=localhost:{beacon_node_port.prysm_grpc}",
-            '--net', 'host',
+            '-e', f"BEACON_HTTP_ENDPOINT=localhost:{port_map.prysm_http}",
+            '-e', f"BEACON_GRPC_ENDPOINT=localhost:{port_map.prysm_grpc}",
             '--volume', f"{os.path.abspath(self.datadir)}:/app/canonical",
             '--tmpfs', "/app/prysm",
-            '--user', str(os.getuid()),
-            docker_image_id,
-            stdout=out_log_file,
-            stderr=err_log_file,
-            preexec_fn=set_sighup_on_parent_exit,
-        )
+        ]
 
     @classmethod
     async def _beacon_node_healthy(cls, port_map: BeaconNodePortMap) -> bool:

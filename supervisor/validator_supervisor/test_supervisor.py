@@ -108,7 +108,7 @@ class ValidatorSupervisorTest(unittest.IsolatedAsyncioTestCase):
             checksum='a44ecaf9a5f956e9e43928252d6471a2eb6dc59245a5747e4fb545d512522768',
         )
         await self.supervisor.set_validator_release(old_release)
-        self.assertEqual(self.supervisor.config.validator_release, old_release)
+        self.assertEqual(self.supervisor.dynamic_config.validator_release, old_release)
 
 
 if __name__ == '__main__':
