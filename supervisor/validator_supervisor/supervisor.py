@@ -19,11 +19,11 @@ from typing import Dict, List, Optional, Union
 
 from .backup_archive import BackupArchive, LockedArchiveCorrupted, make_validator_data_backup
 from .config import Config, DynamicConfig, read_dynamic_config, write_dynamic_config
-from .exceptions import ValidatorRunning, UnlockRequired
+from .exceptions import ValidatorRunning, UnlockRequired, UnknownNode
 from .key_ops import RootKey, IncorrectPassword
 from .promtail import Promtail
 from .rpc.server import RpcServer, RpcTarget
-from .ssh import SSHForward, SSHClient, SSHTunnel, TcpSocket, UnixSocket
+from .ssh import SSHForward, SSHClient, SSHTunnel, TcpSocket, UnixSocket, DEFAULT_BASTION_SSH_PORT
 from .subprocess import start_supervised, start_supervised_multi
 from .validators import \
     BeaconNodePortMap, ValidatorRelease, ValidatorRunner, ValidatorReleaseSchema, \
@@ -106,11 +106,12 @@ class ValidatorSupervisor(RpcTarget):
 
         self._beacon_node_port_maps = [
             BeaconNodePortMap(
+                host_id=(node.host, node.port),
                 lighthouse_rpc=self._alloc_port(),
                 prysm_http=self._alloc_port(),
                 prysm_grpc=self._alloc_port(),
             )
-            for _ in config.nodes
+            for node in config.nodes
         ]
         port_maps: List[List[Union[SSHForward]]] = [
             [
@@ -390,9 +391,14 @@ class ValidatorSupervisor(RpcTarget):
 
         :param host: the hostname or IP address of the destination
         :param port: the port to the SSH server on the destination
+        :raise UnknownNode: if the given node is not already configured
         """
-        # TODO: implement this
-        pass
+        port = port if port is not None else DEFAULT_BASTION_SSH_PORT
+        self._prioritize_beacon_node(host, port)
+        if self._validator is not None:
+            self._validator.beacon_node_ports = self._beacon_node_port_maps
+            # Stop the validator, so it restarts and checks the updated order
+            self._validator.stop()
 
     async def get_health(self) -> Dict[str, object]:
         """
@@ -403,6 +409,7 @@ class ValidatorSupervisor(RpcTarget):
         return {
             'unlocked': self.root_key is not None,
             'validator_running': self._validator_task is not None,
+            'connected_node': self._validator and self._validator.get_connected_node_host(),
             'validator_release':
                 ValidatorReleaseSchema().dump(self.dynamic_config.validator_release),
         }
@@ -451,3 +458,22 @@ class ValidatorSupervisor(RpcTarget):
             self._backup_key = None
         else:
             self._backup_key = root_key.derive_backup_key()
+
+    def _prioritize_beacon_node(self, host: str, port: int):
+        """
+        Prioritize future connections to a particular node.
+
+        :param host: the host address
+        :param port: the bastion port of the host through which connections are tunnelled
+        :raise UnknownNode: if given host, port pair is not a configured beacon node
+        """
+        try:
+            index = next(
+                i for i, port_map in enumerate(self._beacon_node_port_maps)
+                if port_map.host_id == (host, port)
+            )
+        except StopIteration:
+            raise UnknownNode(f"{host}:{port}")
+
+        port_map = self._beacon_node_port_maps.pop(index)
+        self._beacon_node_port_maps.insert(0, port_map)

@@ -20,3 +20,7 @@ class DockerBuildException(Exception):
 
 class BadValidatorRelease(Exception):
     pass
+
+
+class UnknownNode(Exception):
+    pass

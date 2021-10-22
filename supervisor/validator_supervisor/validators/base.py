@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from abc import ABC, abstractmethod
 import asyncio.subprocess
 from asyncio.subprocess import Process
@@ -9,7 +8,7 @@ import logging
 import marshmallow
 from marshmallow import fields, post_load
 import os
-from typing import IO, List, Optional
+from typing import IO, List, Optional, Tuple
 
 from ..backup_archive import check_validator_data_dir
 from ..subprocess import HealthCheck, SimpleSubprocess
@@ -41,6 +40,8 @@ class ValidatorReleaseSchema(marshmallow.Schema):
 
 @dataclass
 class BeaconNodePortMap:
+    # Host name, port tuple for SSH connection
+    host_id: Tuple[str, int]
     lighthouse_rpc: int
     prysm_http: int
     prysm_grpc: int
@@ -117,6 +118,9 @@ class ValidatorRunner(SimpleSubprocess, ABC):
 
     def health_check(self) -> Optional[HealthCheck]:
         return self._HealthCheck(self, interval=10, retries=2)
+
+    def get_connected_node_host(self) -> Optional[Tuple[str, int]]:
+        return self._beacon_node_port.host_id if self._beacon_node_port else None
 
     class _HealthCheck(HealthCheck):
         def __init__(self, validator: ValidatorRunner, interval: float, retries: int):

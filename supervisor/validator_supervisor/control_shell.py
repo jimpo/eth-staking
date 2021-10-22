@@ -134,6 +134,22 @@ class ControlShell(cmd.Cmd):
         pprint.pp(health_info)
 
     @_rpc_command
+    async def do_connect(self, conn: RpcClientConnection, arg: str) -> None:
+        args = arg.split()
+        if len(args) == 1:
+            host = args[0]
+            port = None
+        elif len(args) == 2:
+            host = args[0]
+            port = int(args[1])
+        else:
+            print("usage: connect HOST [PORT]")
+            return
+
+        await conn.connect_eth2_node(host, port)
+        print("OK")
+
+    @_rpc_command
     async def do_unlock(self, conn: RpcClientConnection, _arg) -> None:
         password = getpass.getpass('Passphrase: ')
         if await conn.unlock(password):

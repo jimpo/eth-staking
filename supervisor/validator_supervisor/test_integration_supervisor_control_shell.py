@@ -156,8 +156,9 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
         poll_interval = 0.1
         for i in range(int(timeout / poll_interval)):
             await asyncio.sleep(poll_interval)
+            if self.supervisor._validator is None:
+                continue
             lighthouse_pid = self.supervisor._validator.get_pid()
-            print(lighthouse_pid)
             if lighthouse_pid is None:
                 continue
             return lighthouse_pid
