@@ -6,7 +6,7 @@ import unittest
 
 from .backup_archive import make_validator_data_backup
 from .config import Config
-from .exceptions import MissingValidatorData
+from .exceptions import MissingValidatorData, UnknownNode
 from .key_ops import KeyDescriptor
 from .ssh import SSHConnInfo
 from .supervisor import ValidatorSupervisor
@@ -41,6 +41,12 @@ class ValidatorSupervisorTest(unittest.IsolatedAsyncioTestCase):
                         host='localhost',
                         user='somebody',
                         port=2222,
+                        identity_file='test/config/ssh_id.key',
+                    ),
+                    SSHConnInfo(
+                        host='localhost',
+                        user='somebody',
+                        port=2223,
                         identity_file='test/config/ssh_id.key',
                     ),
                 ],
@@ -109,6 +115,13 @@ class ValidatorSupervisorTest(unittest.IsolatedAsyncioTestCase):
         )
         await self.supervisor.set_validator_release(old_release)
         self.assertEqual(self.supervisor.dynamic_config.validator_release, old_release)
+
+    async def test_connect_eth2_node(self):
+        await self.supervisor.connect_eth2_node('localhost', 2223)
+
+    async def test_connect_eth2_node_to_unknown(self):
+        with self.assertRaises(UnknownNode):
+            await self.supervisor.connect_eth2_node('localhost', 2224)
 
 
 if __name__ == '__main__':

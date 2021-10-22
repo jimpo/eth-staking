@@ -76,11 +76,13 @@ class ValidatorSupervisor(RpcTarget):
             root_key: Optional[RootKey],
             exit_event: asyncio.Event,
             enable_promtail: bool = False,
+            retry_delay: int = RETRY_DELAY,
     ):
         self.nodes = config.nodes
         self.config = config
         self.root_key = root_key
         self._next_port, self._end_port = config.port_range
+        self._retry_delay = retry_delay
 
         if not config.nodes:
             raise ValueError("config must have at least one node")
@@ -199,14 +201,14 @@ class ValidatorSupervisor(RpcTarget):
         ssh_tunnel_tasks = await start_supervised_multi(
             [(f"SSH tunnel to {ssh_tunnel.client.node}", ssh_tunnel)
              for ssh_tunnel in self._ssh_tunnels],
-            RETRY_DELAY,
+            self._retry_delay,
             stop_ssh_tunnels,
         )
 
         stop_promtails = asyncio.Event()
         promtail_tasks = await start_supervised_multi(
             [(f"promtail to {promtail.node}", promtail) for promtail in self._promtails],
-            RETRY_DELAY,
+            self._retry_delay,
             stop_promtails,
         )
 
@@ -343,7 +345,7 @@ class ValidatorSupervisor(RpcTarget):
         self._validator_task = await start_supervised(
             'validator',
             self._validator,
-            RETRY_DELAY,
+            self._retry_delay,
             self._validator_stop_event,
         )
         return True

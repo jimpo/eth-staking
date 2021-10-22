@@ -5,6 +5,7 @@ services:
       context: test/images/ssh
     ports:
       - "2222:22"
+      - "2223:22"
     links:
       - lighthouse
   lighthouse:

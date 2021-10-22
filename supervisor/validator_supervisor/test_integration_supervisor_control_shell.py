@@ -4,6 +4,7 @@ import random
 import ssl
 import subprocess
 import tempfile
+from typing import Awaitable, Callable
 import unittest
 
 from .backup_archive import make_validator_data_backup
@@ -41,6 +42,12 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
             port=2222,
             identity_file='test/config/ssh_id.key',
         )
+        self.node_alias = SSHConnInfo(
+            host='localhost',
+            user='somebody',
+            port=2223,
+            identity_file='test/config/ssh_id.key',
+        )
 
         key_desc, self.root_key = KeyDescriptor.generate(PASSWORD, 'argon2id_weak')
         self.auth_key = gen_user_key()
@@ -49,7 +56,7 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
             config=Config(
                 eth2_network=ETH2_NETWORK,
                 key_desc=key_desc,
-                nodes=[self.node],
+                nodes=[self.node, self.node_alias],
                 data_dir=self.data_dir,
                 logs_dir=self.logs_dir,
                 ssl_cert_file='test/config/cert.pem',
@@ -61,6 +68,7 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
             root_key=self.root_key,
             exit_event=self.exit_event,
             enable_promtail=False,
+            retry_delay=0,
         )
 
         self._generate_initial_backup()
@@ -139,31 +147,47 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
         health_resp = await self.remote_control.get_health()
         self.assertEqual(health_resp['validator_release']['version'], old_release.version)
 
-    async def _wait_for_validator_running(self, timeout: float):
+    async def test_connect_node(self):
+        await self._wait_for_validator_running(timeout=5)
+
+        def check_connected_to(host, port):
+            async def check():
+                health = await self.remote_control.get_health()
+                return health['connected_node'] == [host, port]
+            return check
+
+        await self._wait_for(check_connected_to('localhost', 2222), 5)
+        await self.remote_control.connect_eth2_node('localhost', 2223)
+        await self._wait_for(check_connected_to('localhost', 2223), 5)
+
+    async def _wait_for(self, check: Callable[[], Awaitable[bool]], timeout: float):
         poll_interval = 0.1
         for i in range(int(timeout / poll_interval)):
             await asyncio.sleep(poll_interval)
+            if await check():
+                return
+
+        self.fail("timed out")
+
+    async def _wait_for_validator_running(self, timeout: float):
+        async def check() -> bool:
             resp = await asyncio.wait_for(self.remote_control.get_health(), timeout=2)
             self.assertIsInstance(resp, dict)
             self.assertTrue(resp['unlocked'])
-            if not resp['validator_running']:
-                continue
-            return
-
-        self.fail("timed out waiting for validator to start")
+            return resp['validator_running']
+        await self._wait_for(check, timeout)
 
     async def _wait_for_validator_process_running(self, timeout: float) -> int:
-        poll_interval = 0.1
-        for i in range(int(timeout / poll_interval)):
-            await asyncio.sleep(poll_interval)
+        async def check() -> bool:
             if self.supervisor._validator is None:
-                continue
+                return False
             lighthouse_pid = self.supervisor._validator.get_pid()
-            if lighthouse_pid is None:
-                continue
-            return lighthouse_pid
+            return lighthouse_pid is not None
 
-        self.fail("timed out waiting for validator process to start")
+        await self._wait_for(check, timeout)
+        pid = self.supervisor._validator.get_pid()
+        self.assertIsNotNone(pid)
+        return pid
 
 
 if __name__ == '__main__':

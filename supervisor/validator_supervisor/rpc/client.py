@@ -139,7 +139,7 @@ class RpcClientConnection(RpcTarget):
         )
 
     async def connect_eth2_node(self, host: str, port: Optional[int]):
-        pass
+        await self._rpc_call('connect', [host, port])
 
     async def unlock(self, password: str) -> bool:
         if "\n" in password:
