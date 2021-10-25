@@ -55,7 +55,7 @@ class SSHTunnelTest(unittest.IsolatedAsyncioTestCase):
         )
 
     async def test_open_to_down_server(self):
-        self.tunnel.node.port = 2223
+        self.tunnel.node.port = 2221
         await self.tunnel.start()
         await asyncio.wait_for(self.tunnel.watch(), timeout=2)
         self.assertFalse(self.tunnel.is_running())
