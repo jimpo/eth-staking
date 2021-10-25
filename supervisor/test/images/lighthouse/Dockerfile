@@ -37,6 +37,9 @@ WORKDIR /home/somebody
 COPY --from=builder /lighthouse/scripts/local_testnet /home/somebody/local_testnet_scripts
 COPY vars.env /home/somebody/local_testnet_scripts/vars.env
 
+COPY setup.sh /home/somebody/
+RUN ./setup.sh
+
 COPY run.sh /home/somebody/
 
 EXPOSE 5052
