@@ -1,6 +1,6 @@
 # Ethereum 2.0 Staking Infrastructure
 
-This project contains some of the components I use in my Ethereum 2.0 staking setup.
+This project contains some of the components I use in my Ethereum 2.0 staking setup. This software that provides a limited ability to remotely manage a running validator.
 
 ## Design goals
 
@@ -31,13 +31,25 @@ The downsides are
 - Running several redundant nodes on cloud infrastructure providers can be expensive
 - This requires custom software that is maintained by me
 
+I prioritize
+
+- avoiding slashing over more 9s of uptime
+- security over easy-of-use
+- simple over easy
+
+## System components
+
+There's one or more [*public nodes*](public-node/), which each run the beacon nodes, monitoring and alerting services, and a SSH bastion server. There's the [*validator supervisor*](supervisor/), which runs the validator, its supervisor process, and the control interface server. Finally, there's a *control client*, which can connect through one of the public nodes to the validator supervisor's control interface and issue commands.
+
+To simply network security, most connections are made using unsecured transport through secure SSH tunnels to the bastion server (eg. HTTP through SSH tunnel instead of HTTPS). One major exception is that the RPC interface to the validator supervisor, which requires an additional layer of authentication from the control client for protection in case the public node is compromised.
+
 ## Disclaimers, guarantees, and liability
 
 This project has a bunch of custom software which may be buggy. I take absolutely no responsibility for loss of your funds if you choose to use any of this code.
 
 Only GNU/Linux systems are supported and I have only tested on Ubuntu.
 
-*At the moment, I have no funds staked using this system. When I do, I may update this.*
+At the moment, I *am* actively staking funds using this software and thus have Skin In The Game to keep it operational. If that changes, I'll update this.
 
 ## Deployment
 
