@@ -1,6 +1,6 @@
 """Ethereum 2.0 validator implementation runners."""
 
-from typing import Dict, List, Type
+from typing import Dict, List, Set, Type
 
 from .base import BeaconNodePortMap, ValidatorRelease, ValidatorRunner, ValidatorReleaseSchema
 from .lighthouse import LighthouseValidator
@@ -52,3 +52,8 @@ async def create_validator_for_release(
     except DockerBuildException as err:
         raise BadValidatorRelease("build failure") from err
     return validator
+
+
+def get_validator_impls() -> Set[str]:
+    """Return set of supported validator implementation names."""
+    return set(_VALIDATOR_CLASSES.keys())

@@ -174,7 +174,7 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
             resp = await asyncio.wait_for(self.remote_control.get_health(), timeout=2)
             self.assertIsInstance(resp, dict)
             self.assertTrue(resp['unlocked'])
-            return resp['validator_running']
+            return bool(resp['validator_running'])
         await self._wait_for(check, timeout)
 
     async def _wait_for_validator_process_running(self, timeout: float) -> int:
@@ -185,8 +185,9 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
             return lighthouse_pid is not None
 
         await self._wait_for(check, timeout)
+        assert self.supervisor._validator is not None
         pid = self.supervisor._validator.get_pid()
-        self.assertIsNotNone(pid)
+        assert pid is not None
         return pid
 
 

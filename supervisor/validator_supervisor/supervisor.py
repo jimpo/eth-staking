@@ -27,7 +27,7 @@ from .ssh import SSHForward, SSHClient, SSHTunnel, TcpSocket, UnixSocket, DEFAUL
 from .subprocess import start_supervised, start_supervised_multi
 from .validators import \
     BeaconNodePortMap, ValidatorRelease, ValidatorRunner, ValidatorReleaseSchema, \
-    create_validator_for_release
+    create_validator_for_release, get_validator_impls
 
 LOG = logging.getLogger(__name__)
 
@@ -149,9 +149,9 @@ class ValidatorSupervisor(RpcTarget):
         if enable_promtail:
             log_paths = {
                 'validator_supervisor': self.config.supervisor_log_path,
-                'lighthouse': self.config.lighthouse_log_path,
-                'prysm': self.config.prysm_log_path,
             }
+            for impl_name in get_validator_impls():
+                log_paths[impl_name] = self.config.validator_log_path(impl_name)
             self._promtails = [
                 Promtail(
                     node.host,
@@ -333,13 +333,8 @@ class ValidatorSupervisor(RpcTarget):
             return False
 
         await self.load_backup()
-        self._validator = await create_validator_for_release(
-            self.dynamic_config.validator_release,
-            self.eth2_network,
-            os.path.join(self._validator_canonical_dir),
-            out_log_filepath=self.config.lighthouse_log_path,
-            err_log_filepath=self.config.lighthouse_log_path,
-            beacon_node_ports=self._beacon_node_port_maps,
+        self._validator = await self._create_validator_for_release(
+            self.dynamic_config.validator_release
         )
         self._validator_stop_event = asyncio.Event()
         self._validator_task = await start_supervised(
@@ -372,14 +367,7 @@ class ValidatorSupervisor(RpcTarget):
         if self._validator_task is not None:
             raise ValidatorRunning()
 
-        _ = await create_validator_for_release(
-            release,
-            self.eth2_network,
-            os.path.join(self._validator_canonical_dir),
-            out_log_filepath=self.config.lighthouse_log_path,
-            err_log_filepath=self.config.lighthouse_log_path,
-            beacon_node_ports=[],
-        )
+        _ = await self._create_validator_for_release(release)
         self.dynamic_config.validator_release = release
         write_dynamic_config(self._dynamic_config_path, self.dynamic_config)
 
@@ -479,3 +467,14 @@ class ValidatorSupervisor(RpcTarget):
 
         port_map = self._beacon_node_port_maps.pop(index)
         self._beacon_node_port_maps.insert(0, port_map)
+
+    async def _create_validator_for_release(self, release: ValidatorRelease) -> ValidatorRunner:
+        log_path = self.config.validator_log_path(release.impl_name)
+        return await create_validator_for_release(
+            release,
+            self.eth2_network,
+            os.path.join(self._validator_canonical_dir),
+            out_log_filepath=log_path,
+            err_log_filepath=log_path,
+            beacon_node_ports=self._beacon_node_port_maps,
+        )

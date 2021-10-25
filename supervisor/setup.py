@@ -36,7 +36,7 @@ setuptools.setup(
             "images/lighthouse/sigp_pgp_release_key.asc",
             "images/lighthouse/run.sh",
             "images/prysm/Dockerfile",
-            "images/prysm/pyrlabs_pgp_release_key.asc",
+            "images/prysm/prylabs_pgp_release_key.asc",
             "images/prysm/run.sh",
         ],
     },

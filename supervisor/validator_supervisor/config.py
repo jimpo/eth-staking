@@ -17,9 +17,6 @@ from .validators import ValidatorRelease, ValidatorReleaseSchema
 
 CONFIG_VERSION = 1
 SUPERVISOR_LOG_NAME = 'supervisor.log'
-LIGHTHOUSE_LOG_NAME = 'lighthouse.log'
-PRYSM_LOG_NAME = 'prysm.log'
-
 DEFAULT_BACKUP_FILENAME = 'supervisor-backup.bin'
 DEFAULT_VALIDATOR_RELEASE = ValidatorRelease(
     impl_name='lighthouse',
@@ -72,13 +69,8 @@ class Config:
     def supervisor_log_path(self) -> str:
         return os.path.join(self.logs_dir, SUPERVISOR_LOG_NAME)
 
-    @property
-    def lighthouse_log_path(self) -> str:
-        return os.path.join(self.logs_dir, LIGHTHOUSE_LOG_NAME)
-
-    @property
-    def prysm_log_path(self) -> str:
-        return os.path.join(self.logs_dir, PRYSM_LOG_NAME)
+    def validator_log_path(self, validator_impl: str) -> str:
+        return os.path.join(self.logs_dir, f"{validator_impl}.log")
 
 
 @dataclass
