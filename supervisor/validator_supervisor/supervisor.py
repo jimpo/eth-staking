@@ -132,12 +132,20 @@ class ValidatorSupervisor(RpcTarget):
                 SSHForward(TcpSocket.localhost(self._alloc_port()), TcpSocket('loki', 3100)),
                 # Reverse tunnel to local SSH server
                 SSHForward(TcpSocket.localhost(22), TcpSocket.localhost(2222), reverse=True),
+                # Reverse tunnel to lighthouse validator Prometheus server
+                SSHForward(
+                    TcpSocket.localhost(5064), TcpSocket('validator-proxy', 5064), reverse=True,
+                ),
+                # Reverse tunnel to prysm validator Prometheus server
+                SSHForward(
+                    TcpSocket.localhost(8081), TcpSocket('validator-proxy', 8081), reverse=True,
+                ),
                 # Reverse tunnel to RPC server
                 SSHForward(UnixSocket(self.rpc_sock_path), TcpSocket.localhost(8000), reverse=True),
             ]
             for beacon_node_port_map in self._beacon_node_port_maps
         ]
-        _, _, _, loki_tunnels, _, _ = zip(*port_maps)
+        _, _, _, loki_tunnels, _, _, _, _ = zip(*port_maps)
         self._ssh_clients = [
             SSHClient(node, known_hosts_file, known_hosts_lock)
             for node in config.nodes

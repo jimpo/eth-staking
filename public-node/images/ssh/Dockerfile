@@ -11,6 +11,7 @@ RUN rm /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub && \
     ssh-keygen -q -N "" -t ed25519 -f /etc/ssh/host-keys/ssh_host_ed25519_key && \
     echo "HostKey /etc/ssh/host-keys/ssh_host_ed25519_key" >> /etc/ssh/sshd_config
 
+RUN echo "GatewayPorts yes" >> /etc/ssh/sshd_config
 RUN mkdir /var/run/sshd
 
 # Create unprivileged user

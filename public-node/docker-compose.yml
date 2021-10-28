@@ -5,22 +5,21 @@ services:
       context: ./images/grafana
     volumes:
       - "grafana:/var/lib/grafana"
-    links:
-      - loki
-      - prometheus
+    networks:
+      main:
   loki:
     build: ./images/loki
     volumes:
       - "loki:/var/lib/loki"
     command: ["-config.file=/etc/loki/config.yaml"]
+    networks:
+      main:
   prometheus:
     build: ./images/prometheus
     volumes:
       - "prometheus:/prometheus"
-    links:
-      - geth
-      - prysm
-      - lighthouse
+    networks:
+      main:
   promtail:
     build: images/promtail
     volumes:
@@ -28,9 +27,9 @@ services:
       - "/run/log/journal/:/run/log/journal/"
       - "/etc/machine-id:/etc/machine-id"
       - "promtail:/var/lib/promtail"
-    links:
-      - loki
     command: ["-config.file=/etc/promtail/config.yml"]
+    networks:
+      main:
   geth:
     build: images/geth
     volumes:
@@ -38,6 +37,8 @@ services:
     ports:
       - "30303:30303/tcp"
       - "30303:30303/udp"
+    networks:
+      main:
   lighthouse:
     build: images/lighthouse
     volumes:
@@ -48,8 +49,8 @@ services:
       - "9000:9000/udp"
     environment:
       ETH1_HOST: geth
-    links:
-      - geth
+    networks:
+      main:
   prysm:
     build: images/prysm
     volumes:
@@ -59,22 +60,26 @@ services:
     ports:
       - "12000:12000/udp"
       - "13000:13000/tcp"
-    links:
-      - geth
+    networks:
+      main:
   ssh:
     build: images/ssh
+    expose:
+      - "5064"
+      - "8081"
     ports:
       - "2222:22"
     volumes:
       - "supervisor_backups:/home/somebody/supervisor-backups"
       - "ssh_host_keys:/etc/ssh/host-keys"
       - "./authorized_keys:/home/somebody/.ssh/authorized_keys"
-    links:
-      - grafana
-      - geth
-      - lighthouse
-      - loki
-      - prysm
+    networks:
+      main:
+        aliases:
+          - validator-proxy
+networks:
+  main:
+    driver: bridge
 volumes:
   grafana:
   loki:

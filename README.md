@@ -1,6 +1,6 @@
 # Ethereum 2.0 Staking Infrastructure
 
-This project contains some of the components I use in my Ethereum 2.0 staking setup. This software that provides a limited ability to remotely manage a running validator.
+This project contains some of the components I use in my Ethereum 2.0 staking setup. This software provides a limited ability to remotely manage a running validator.
 
 ## Design goals
 

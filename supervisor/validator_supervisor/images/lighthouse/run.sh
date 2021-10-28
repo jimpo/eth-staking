@@ -24,6 +24,8 @@ lighthouse validator \
     --datadir $LIGHTHOUSE_DIR \
     --network "$ETH2_NETWORK" \
     --beacon-nodes "$BEACON_NODES" \
+    --metrics \
+    --metrics-allow-origin '*' \
     &
 
 validator_pid=$!
