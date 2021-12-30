@@ -219,13 +219,17 @@ class HealthCheck(ABC):
 
 async def _watch_subproc(name: str, subproc: Subprocess, stop_event: asyncio.Event) -> None:
     health_check = subproc.health_check()
+    health_check_task = asyncio.create_task(health_check.monitor()) if health_check else None
     interrupts: List[Awaitable] = [stop_event.wait()]
-    if health_check is not None:
-        interrupts.append(health_check.monitor())
+    if health_check_task is not None:
+        interrupts.append(health_check_task)
     subproc_task = await either_or_interrupt(subproc.watch(), interrupts)
 
     if subproc_task is not None:
-        if not stop_event.is_set():
+        if health_check_task is not None and health_check_task.done():
+            err = health_check_task.exception()
+            if err:
+                LOG.error(f"Exception in {name} health check", exc_info=err)
             LOG.info(f"Stopping {name} due to failing health checks")
         subproc.stop()
         await subproc_task

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+import aiohttp
 import asyncio.subprocess
 from asyncio.subprocess import Process
 from dataclasses import dataclass
@@ -56,6 +57,7 @@ class ValidatorRunner(SimpleSubprocess, ABC):
             err_log_filepath: str,
             beacon_node_ports: List[BeaconNodePortMap],
             release: ValidatorRelease,
+            container_name: str,
     ):
         super().__init__(out_log_filepath, err_log_filepath)
         self.eth2_network = eth2_network
@@ -63,6 +65,7 @@ class ValidatorRunner(SimpleSubprocess, ABC):
         self.release = release
         self.beacon_node_ports = beacon_node_ports
         self._beacon_node_port: Optional[BeaconNodePortMap] = None
+        self.container_name = container_name
 
     async def build_docker_image(self) -> str:
         return await build_docker_image(
@@ -97,7 +100,7 @@ class ValidatorRunner(SimpleSubprocess, ABC):
         return await asyncio.subprocess.create_subprocess_exec(
             'docker', 'run', '--rm',
             # Docker container name acts like a simple mutex
-            '--name', f"validator-supervisor_validator",
+            '--name', self.container_name,
             *docker_opts,
             '--net', 'host',
             '--user', str(os.getuid()),
@@ -112,8 +115,36 @@ class ValidatorRunner(SimpleSubprocess, ABC):
         pass
 
     @classmethod
-    @abstractmethod
     async def _beacon_node_healthy(cls, port_map: BeaconNodePortMap) -> bool:
+        try:
+            async with aiohttp.ClientSession() as session:
+                api_port = cls._beacon_node_api_port(port_map)
+                syncing_url = f"http://localhost:{api_port}/eth/v1/node/syncing"
+                async with session.get(syncing_url) as response:
+                    if response.status != 200:
+                        return False
+
+                    payload = await response.json()
+                    if not isinstance(payload, dict):
+                        return False
+
+                    data = payload.get('data')
+                    if not isinstance(data, dict):
+                        return False
+
+                    return data.get('is_syncing', None) is False
+
+        except aiohttp.ClientConnectionError:
+            LOG.debug('Connection error')
+            return False
+
+        except asyncio.TimeoutError:
+            LOG.debug('Timeout error')
+            return False
+
+    @classmethod
+    @abstractmethod
+    def _beacon_node_api_port(cls, port_map: BeaconNodePortMap) -> int:
         pass
 
     def health_check(self) -> Optional[HealthCheck]:

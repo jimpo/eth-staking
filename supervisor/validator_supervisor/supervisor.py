@@ -36,6 +36,7 @@ SSH_KNOWN_HOSTS_FILENAME = 'ssh_known_hosts'
 CONTROL_RPC_SOCKNAME = 'rpc.sock'
 RETRY_DELAY = 10
 DYNAMIC_CONFIG_FILENAME = 'dynamic_config.yml'
+DEFAULT_VALIDATOR_CONTAINER_NAME = 'validator-supervisor_validator'
 
 
 class ScpFailure(Exception):
@@ -77,12 +78,14 @@ class ValidatorSupervisor(RpcTarget):
             exit_event: asyncio.Event,
             enable_promtail: bool = False,
             retry_delay: int = RETRY_DELAY,
+            validator_container_name: str = DEFAULT_VALIDATOR_CONTAINER_NAME,
     ):
         self.nodes = config.nodes
         self.config = config
         self.root_key = root_key
         self._next_port, self._end_port = config.port_range
         self._retry_delay = retry_delay
+        self._validator_container_name = validator_container_name
 
         if not config.nodes:
             raise ValueError("config must have at least one node")
@@ -485,4 +488,5 @@ class ValidatorSupervisor(RpcTarget):
             out_log_filepath=log_path,
             err_log_filepath=log_path,
             beacon_node_ports=self._beacon_node_port_maps,
+            container_name=self._validator_container_name,
         )

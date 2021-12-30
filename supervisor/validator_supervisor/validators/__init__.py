@@ -21,6 +21,7 @@ async def create_validator_for_release(
         out_log_filepath: str,
         err_log_filepath: str,
         beacon_node_ports: List[BeaconNodePortMap],
+        container_name: str,
 ) -> ValidatorRunner:
     """
     Factory for creating a ValidatorRunner based on the release.
@@ -46,6 +47,7 @@ async def create_validator_for_release(
         err_log_filepath,
         beacon_node_ports,
         release,
+        container_name,
     )
     try:
         await validator.build_docker_image()

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import aiohttp
 import logging
 import os
 from typing import List
@@ -20,24 +19,5 @@ class LighthouseValidator(ValidatorRunner):
         ]
 
     @classmethod
-    async def _beacon_node_healthy(cls, port_map: BeaconNodePortMap) -> bool:
-        try:
-            async with aiohttp.ClientSession() as session:
-                syncing_url = f"http://localhost:{port_map.lighthouse_rpc}/eth/v1/node/syncing"
-                async with session.get(syncing_url) as response:
-                    if response.status != 200:
-                        return False
-
-                    payload = await response.json()
-                    if not isinstance(payload, dict):
-                        return False
-
-                    data = payload.get('data')
-                    if not isinstance(data, dict):
-                        return False
-
-                    return data.get('is_syncing', None) is False
-
-        except aiohttp.ClientConnectionError:
-            LOG.debug('Connection error')
-            return False
+    def _beacon_node_api_port(cls, port_map: BeaconNodePortMap) -> int:
+        return port_map.lighthouse_rpc

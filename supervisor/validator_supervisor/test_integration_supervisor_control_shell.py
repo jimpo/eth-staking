@@ -20,10 +20,14 @@ ETH2_NETWORK = 'pyrmont'
 PASSWORD = 'password123'
 TEST_MNEMONIC = b'clog dust clip zone cute decrease correct quantum forget climb buffalo ' \
     b'girl plunge fuel together warfare space cost memory able evolve rebel orient check'
+CONTAINER_NAME = 'TEST_validator-supervisor_supervisor'
 
 
 class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self) -> None:
+        # Sometimes the container will be created and not removed if a test case run is interrupted
+        subprocess.run(['docker', 'rm', CONTAINER_NAME], stderr=subprocess.DEVNULL)
+
         self.tmpdir = tempfile.TemporaryDirectory()
         self.configs_dir = os.path.join(self.tmpdir.name, 'configs')
         self.data_dir = os.path.join(self.tmpdir.name, 'data')
@@ -69,6 +73,7 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
             exit_event=self.exit_event,
             enable_promtail=False,
             retry_delay=0,
+            validator_container_name=CONTAINER_NAME,
         )
 
         self._generate_initial_backup()
