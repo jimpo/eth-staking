@@ -6,7 +6,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ARG COMMIT=7231b3efb8095d3dd18d7164c3fa84d7705759d3
+ARG COMMIT=11a3a35097ec493d71137c9bfa433bceeedff6c0
 RUN git clone https://github.com/ethereum/go-ethereum /go-ethereum && \
     cd /go-ethereum && \
     git checkout $COMMIT && \

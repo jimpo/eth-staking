@@ -5,6 +5,7 @@ services:
       context: ./images/grafana
     volumes:
       - "grafana:/var/lib/grafana"
+    restart: always
     networks:
       main:
   loki:
@@ -12,12 +13,14 @@ services:
     volumes:
       - "loki:/var/lib/loki"
     command: ["-config.file=/etc/loki/config.yaml"]
+    restart: always
     networks:
       main:
   prometheus:
     build: ./images/prometheus
     volumes:
       - "prometheus:/prometheus"
+    restart: always
     networks:
       main:
   promtail:
@@ -28,6 +31,7 @@ services:
       - "/etc/machine-id:/etc/machine-id"
       - "promtail:/var/lib/promtail"
     command: ["-config.file=/etc/promtail/config.yml"]
+    restart: always
     networks:
       main:
   geth:
@@ -37,6 +41,7 @@ services:
     ports:
       - "30303:30303/tcp"
       - "30303:30303/udp"
+    restart: always
     networks:
       main:
   lighthouse:
@@ -49,6 +54,7 @@ services:
       - "9000:9000/udp"
     environment:
       ETH1_HOST: geth
+    restart: always
     networks:
       main:
   prysm:
@@ -60,6 +66,7 @@ services:
     ports:
       - "12000:12000/udp"
       - "13000:13000/tcp"
+    restart: always
     networks:
       main:
   ssh:
@@ -73,6 +80,7 @@ services:
       - "supervisor_backups:/home/somebody/supervisor-backups"
       - "ssh_host_keys:/etc/ssh/host-keys"
       - "./authorized_keys:/home/somebody/.ssh/authorized_keys"
+    restart: always
     networks:
       main:
         aliases:
