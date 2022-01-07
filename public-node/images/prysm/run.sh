@@ -7,7 +7,7 @@ set_network_flags() {
     if [[ -n "$genesis_state_sha256" ]] ; then
         genesis_state_path="${ETH2_NETWORK}_genesis_state.ssz"
         curl -sSL -o $genesis_state_path \
-             https://github.com/eth2-clients/eth2-networks/blob/master/shared/$ETH2_NETWORK/genesis.ssz\?raw\=true
+             https://github.com/eth-clients/eth2-networks/blob/master/shared/$ETH2_NETWORK/genesis.ssz\?raw\=true
         echo "$genesis_state_sha256  $genesis_state_path" | sha256sum -c
         network_flags="$network_flags --genesis-state=$genesis_state_path"
     fi
