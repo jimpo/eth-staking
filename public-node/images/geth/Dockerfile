@@ -1,26 +1,29 @@
-FROM golang:1 as builder
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        git && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-ARG COMMIT=11a3a35097ec493d71137c9bfa433bceeedff6c0
-RUN git clone https://github.com/ethereum/go-ethereum /go-ethereum && \
-    cd /go-ethereum && \
-    git checkout $COMMIT && \
-    make geth
-
 FROM ubuntu:focal
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        ca-certificates && \
+    apt-get install -y \
+        ca-certificates curl gpg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /go-ethereum/build/bin/geth /usr/local/bin/
+ARG GETH_SIGNING_KEY="FDE5 A1A0 44FA 13D2 F7AD  A019 A61A 1356 9BA2 8146"
+COPY geth_pgp_release_key.asc /tmp/
+RUN gpg --import /tmp/geth_pgp_release_key.asc && \
+    gpg --list-keys "$GETH_SIGNING_KEY" >/dev/null 2>&1 && \
+    rm /tmp/geth_pgp_release_key.asc
+
+ARG ARCH=amd64
+ARG VERSION=1.10.16-20356e57
+ARG CHECKSUM=c3d2a74f15d0353d8fddb4cda7d8b88b822bb30ee2db5453d1fe689564222398
+RUN cd /tmp && \
+    curl -sSLO https://gethstore.blob.core.windows.net/builds/geth-linux-$ARCH-$VERSION.tar.gz && \
+    curl -sSLO https://gethstore.blob.core.windows.net/builds/geth-linux-$ARCH-$VERSION.tar.gz.asc && \
+    gpg --verify geth-linux-$ARCH-$VERSION.tar.gz.asc 2>&1 | \
+        grep "Primary key fingerprint: $GETH_SIGNING_KEY" && \
+    [ "$(sha256sum geth-linux-$ARCH-$VERSION.tar.gz | cut -d ' ' -f 1)" = "$CHECKSUM" ] && \
+    tar -zxf geth-linux-$ARCH-$VERSION.tar.gz && \
+    cp geth-linux-$ARCH-$VERSION/geth /usr/local/bin/geth && \
+    rm -rf geth-linux-$ARCH-$VERSION  geth-linux-$ARCH-$VERSION.tar.gz geth-linux-$ARCH-$VERSION.tar.gz.asc
 
 # Create unprivileged user
 RUN useradd -m somebody

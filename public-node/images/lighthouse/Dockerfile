@@ -1,34 +1,31 @@
-FROM rust:1 AS builder
-
-RUN apt-get update && \
-    apt-get install -y \
-        cmake gpg && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN curl -L https://github.com/michaelsproul.gpg | gpg --import
-RUN curl -L https://github.com/paulhauner.gpg | gpg --import
-
-ARG PORTABLE=0
-ENV PORTABLE $PORTABLE
-ARG TAG_REF=91851946e56ee85d757216a4804f084a2efd0cf8
-RUN git clone https://github.com/sigp/lighthouse /lighthouse && \
-    cd /lighthouse && \
-    git checkout $TAG_REF && \
-    git verify-tag $TAG_REF && \
-    make install && \
-    make install-lcli
-
 FROM ubuntu:focal
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        ca-certificates && \
+    apt-get install -y \
+        ca-certificates curl gpg && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/cargo/bin/lighthouse /usr/local/bin/lighthouse
-COPY --from=builder /usr/local/cargo/bin/lcli /usr/local/bin/lcli
+# PGP key hosted at https://keybase.io/sigp/pgp_keys.asc?fingerprint=15e66d941f697e28f49381f426416dc3f30674b0
+ARG SIGP_SIGNING_KEY="15E6 6D94 1F69 7E28 F493  81F4 2641 6DC3 F306 74B0"
+COPY sigp_pgp_release_key.asc /tmp/
+RUN gpg --import /tmp/sigp_pgp_release_key.asc && \
+    gpg --list-keys "$SIGP_SIGNING_KEY" >/dev/null 2>&1 && \
+    rm /tmp/sigp_pgp_release_key.asc
+
+ARG ARCH=x86_64
+ARG VERSION=v2.1.5
+# Double check checksum in addition to PGP sig out of extreme paranoia
+ARG CHECKSUM=a18df901cec5b5b6bb55dde141bc0ab30f41f704da93027391535ef83deb1e4a
+RUN cd /tmp && \
+    curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
+    curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc && \
+    gpg --verify lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc 2>&1 | \
+	      grep "Primary key fingerprint: $SIGP_SIGNING_KEY" && \
+    [ "$(sha256sum lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz | cut -d ' ' -f 1)" = "$CHECKSUM" ] && \
+    tar -zxf lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
+    cp lighthouse /usr/local/bin/lighthouse && \
+    rm lighthouse lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc
 
 # Create unprivileged user
 RUN useradd -m somebody
