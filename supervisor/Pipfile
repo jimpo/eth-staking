@@ -14,6 +14,7 @@ python-prctl = "~=1.8.1"
 mypy = "*"
 types-pyyaml = "*"
 types-setuptools = "*"
+pip-audit = "*"
 
 [requires]
 python_version = "3.8"
