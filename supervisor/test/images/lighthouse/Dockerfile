@@ -1,4 +1,4 @@
-FROM rust:1 AS builder
+FROM rust:1-bullseye AS builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -15,7 +15,7 @@ RUN git clone https://github.com/sigp/lighthouse /lighthouse && \
     make install && \
     make install-lcli
 
-FROM node:16
+FROM node:16-bullseye
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \

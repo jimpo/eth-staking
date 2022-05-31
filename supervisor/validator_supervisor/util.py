@@ -7,18 +7,22 @@ What, you think a project could exist without one?
 import asyncio
 import signal
 from asyncio import Task, FIRST_COMPLETED
+from collections.abc import Coroutine
 import logging
 from pkg_resources import resource_filename
 import prctl
 from subprocess import PIPE
-from typing import Awaitable, Dict, List, Optional
+from typing import Awaitable, Dict, List, Optional, Union
 
 from .exceptions import DockerBuildException
 
 LOG = logging.getLogger(__name__)
 
 
-async def either_or_interrupt(awaitable: Awaitable, interrupts: List[Awaitable]) -> Optional[Task]:
+async def either_or_interrupt(
+        awaitable: Union[Task, Coroutine],
+        interrupts: List[Awaitable],
+) -> Optional[Task]:
     """
     Wait for either the given awaitable or for an interrupt event. If the interrupt happens first,
     return the pending task. All interrupts must be cancellable.
@@ -42,7 +46,7 @@ async def either_or_interrupt(awaitable: Awaitable, interrupts: List[Awaitable])
 class ExitMixin(object):
     _exit_event: asyncio.Event
 
-    async def _either_or_exit(self, awaitable: Awaitable) -> Optional[Task]:
+    async def _either_or_exit(self, awaitable: Union[Task, Coroutine]) -> Optional[Task]:
         """
         Wait for either the given awaitable or for this to exit. If the exit happens first, return
         the pending task.

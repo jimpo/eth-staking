@@ -4,20 +4,199 @@ The module exporting the RpcServer.
 See RpcServer class documentation for more details.
 """
 
+from __future__ import annotations
+
+import abc
 import asyncio
+from dataclasses import dataclass
 import json
 import logging
 import os
 from ssl import SSLContext
-from typing import Dict, Optional, Tuple
+from typing import Dict, List, Optional, Type
 
 from .auth import gen_auth_challenge, check_auth_response
 from .jsonrpc import \
     BEGIN_UNLOCK_RESULT, JsonRpcRequest, JsonRpcResponse, MalformedJsonRpc, RpcTarget
 from ..util import ExitMixin
-from ..validators import ValidatorRelease, ValidatorReleaseSchema
+from ..validators import ValidatorReleaseSchema
 
 LOG = logging.getLogger(__name__)
+
+
+@dataclass
+class RpcResult:
+    success: bool
+    result: object
+    check_password: Optional[Type[RpcOperationPasswordCheck]] = None
+
+
+@dataclass
+class RpcContext:
+    target: RpcTarget
+    user_keys: Dict[str, str]
+    user: Optional[str]
+    auth_challenge: str
+
+
+class RpcOperation(abc.ABC):
+    authenticated = True
+
+    @classmethod
+    @property
+    @abc.abstractmethod
+    def method(cls) -> str:
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
+        pass
+
+
+class RpcOperationPasswordCheck(abc.ABC):
+    @classmethod
+    @property
+    @abc.abstractmethod
+    def method(cls) -> str:
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    async def handle(cls, ctx: RpcContext, password: bytes, params: object) -> RpcResult:
+        pass
+
+
+class GetAuthChallengeOp(RpcOperation):
+    method = 'get_auth_challenge'
+    authenticated = False
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, _params: object) -> RpcResult:
+        return RpcResult(True, ctx.auth_challenge)
+
+
+class AuthOp(RpcOperation):
+    method = 'auth'
+    authenticated = False
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
+        if not (isinstance(params, list) and len(params) == 2):
+            return RpcResult(False, "params must be an array [USER, AUTH_RESPONSE]")
+
+        user = params[0]
+        if not isinstance(user, str):
+            return RpcResult(False, "user must be a string")
+
+        auth_response = params[1]
+        if not isinstance(auth_response, str):
+            return RpcResult(False, "auth response must be a string")
+
+        try:
+            user_key = ctx.user_keys[user]
+        except KeyError:
+            return RpcResult(False, "user not found")
+
+        if not check_auth_response(user_key, ctx.auth_challenge, auth_response):
+            return RpcResult(False, "denied")
+
+        ctx.user = user
+        return RpcResult(True, "accepted")
+
+
+class GetHealthOp(RpcOperation):
+    method = 'get_health'
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
+        result = await ctx.target.get_health()
+        return RpcResult(True, result)
+
+
+class BeginUnlockOp(RpcOperation):
+    method = 'begin_unlock'
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
+        return RpcResult(True, BEGIN_UNLOCK_RESULT, CheckUnlockOp)
+
+
+class CheckUnlockOp(RpcOperationPasswordCheck):
+    method = 'check_unlock'
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, password_bytes: bytes, params: object) -> RpcResult:
+        try:
+            password = password_bytes.decode('utf-8').strip()
+        except UnicodeDecodeError:
+            return RpcResult(False, "Password is not valid UTF-8")
+
+        success = await ctx.target.unlock(password)
+        return RpcResult(True, success)
+
+
+class StartValidatorOp(RpcOperation):
+    method = 'start_validator'
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
+        result = await ctx.target.start_validator()
+        return RpcResult(True, result)
+
+
+class StopValidatorOp(RpcOperation):
+    method = 'stop_validator'
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
+        result = await ctx.target.stop_validator()
+        return RpcResult(True, result)
+
+
+class ConnectOp(RpcOperation):
+    method = 'connect'
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
+        if not (isinstance(params, list) and len(params) in {1, 2}):
+            return RpcResult(False, "params must be an array [HOST, [PORT]]")
+
+        host = params[0]
+        if not isinstance(host, str):
+            return RpcResult(False, "host must be a string")
+
+        if len(params) == 2:
+            port = params[1]
+            if not isinstance(port, int):
+                return RpcResult(False, "port must be an int")
+        else:
+            port = None
+
+        await ctx.target.connect_eth2_node(host, port)
+        return RpcResult(True, "OK")
+
+
+class ShutdownOp(RpcOperation):
+    method = 'shutdown'
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
+        await ctx.target.shutdown()
+        return RpcResult(True, None)
+
+
+class SetValidatorReleaseOp(RpcOperation):
+    method = 'set_validator_release'
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
+        if not isinstance(params, dict):
+            return RpcResult(False, "params must be an JSON object")
+
+        release = ValidatorReleaseSchema().load(params)
+        await ctx.target.set_validator_release(release)
+        return RpcResult(True, None)
 
 
 class RpcServer(object):
@@ -90,12 +269,17 @@ class RpcServer(object):
         await session.run()
 
     class _Session(ExitMixin):
-        METHODS = {'get_health', 'start_validator', 'stop_validator', 'connect', 'shutdown',
-                   'begin_unlock', 'check_unlock', 'get_auth_challenge', 'auth',
-                   'set_validator_release'}
-        UNAUTHENTICATED_METHODS = {'get_auth_challenge', 'auth'}
-
-        _password: Optional[bytes]
+        OPERATIONS: List[Type[RpcOperation]] = [
+            GetHealthOp,
+            StartValidatorOp,
+            StopValidatorOp,
+            ConnectOp,
+            ShutdownOp,
+            BeginUnlockOp,
+            GetAuthChallengeOp,
+            AuthOp,
+            SetValidatorReleaseOp,
+        ]
 
         def __init__(
                 self,
@@ -107,16 +291,21 @@ class RpcServer(object):
                 exit_event: asyncio.Event,
         ):
             self.target = target
-            self.user_keys = user_keys
+            self.ctx = RpcContext(
+                target=target,
+                user_keys=user_keys,
+                user=None,
+                auth_challenge=gen_auth_challenge(),
+            )
             self.reader = reader
             self.writer = writer
+            # TODO: Figure out why mypy thinks op.method is a Callable, not a str
+            self._operations: Dict[str, Type[RpcOperation]] = \
+                {op.method: op for op in self.OPERATIONS}  # type: ignore
             self._handler_lock = handler_lock
             self._exit_event = exit_event
-
-            self._unlocking = False
-            self._password = None
-            self._auth_challenge = gen_auth_challenge()
-            self.user: Optional[str] = None
+            self._password: Optional[bytes] = None
+            self._password_check: Optional[Type[RpcOperationPasswordCheck]] = None
 
         async def run(self) -> None:
             try:
@@ -129,9 +318,8 @@ class RpcServer(object):
                     if not line:
                         return
 
-                    if self._unlocking:
+                    if self._password_check is not None and self._password is None:
                         self._password = line
-                        self._unlocking = False
                     else:
                         response = await self._handle_request(line)
                         self.writer.write(json.dumps(response.to_json()).encode())
@@ -156,113 +344,44 @@ class RpcServer(object):
                 LOG.warning(msg)
                 return JsonRpcResponse(call_id=None, result=msg, is_error=True)
 
-            return await self._handle_rpc(request)
+            result = await self._handle_rpc(request)
+            self._password_check = result.check_password
+            return JsonRpcResponse(request.call_id, result.result, is_error=not result.success)
 
-        async def _handle_rpc(self, request: JsonRpcRequest) -> JsonRpcResponse:
+        async def _handle_rpc(self, request: JsonRpcRequest) -> RpcResult:
             LOG.debug(f"Received request: {request}")
-            if request.method in self.METHODS:
-                handler = getattr(self, f"_handle_{request.method}")
-            else:
-                LOG.error(f"Unknown JSON-RPC command: {request.method}")
-                return JsonRpcResponse(request.call_id, "Unknown JSON-RPC command", is_error=True)
 
-            if self.user is not None or request.method in self.UNAUTHENTICATED_METHODS:
+            if self._password_check:
+                # _password is populated in run
+                assert self._password is not None
+                password = self._password
+                password_check = self._password_check
+
+                self._password = None
+                self._password_check = None
+
+                if request.method != password_check.method:
+                    return RpcResult(False, f"Expected method {password_check.method}")
+
                 try:
                     async with self._handler_lock:
-                        success, result = await handler(request.params)
+                        return await password_check.handle(self.ctx, password, request.params)
                 except Exception as err:
                     LOG.warning(f"Exception occurred handling request {request}: {repr(err)}")
-                    success = False
-                    result = repr(err)
-            else:
-                success = False
-                result = f"{request.method} requires authentication"
-
-            return JsonRpcResponse(request.call_id, result, is_error=not success)
-
-        async def _handle_get_auth_challenge(self, _params: object):
-            return True, self._auth_challenge
-
-        async def _handle_auth(self, params: object):
-            if not (isinstance(params, list) and len(params) == 2):
-                return False, "params must be an array [USER, AUTH_RESPONSE]"
-
-            user = params[0]
-            if not isinstance(user, str):
-                return False, "user must be a string"
-
-            auth_response = params[1]
-            if not isinstance(auth_response, str):
-                return False, "auth response must be a string"
+                    return RpcResult(False, repr(err))
 
             try:
-                user_key = self.user_keys[user]
+                operation = self._operations[request.method]
             except KeyError:
-                return False, "user not found"
+                LOG.error(f"Unknown JSON-RPC command: {request.method}")
+                return RpcResult(False, "Unknown JSON-RPC command")
 
-            if not check_auth_response(user_key, self._auth_challenge, auth_response):
-                return False, "denied"
-
-            self.user = user
-            return True, "accepted"
-
-        async def _handle_begin_unlock(self, _params: object):
-            self._unlocking = True
-            return True, BEGIN_UNLOCK_RESULT
-
-        async def _handle_check_unlock(self, _params: object):
-            if self._password is None:
-                return False, "Must first call begin_unlock"
-
-            password_bytes = self._password
-            self._password = None
+            if self.ctx.user is None and operation.authenticated:
+                return RpcResult(False, f"{request.method} requires authentication")
 
             try:
-                password = password_bytes.decode('utf-8').strip()
-            except UnicodeDecodeError:
-                return False, "Password is not valid UTF-8"
-
-            success = await self.target.unlock(password)
-            return True, success
-
-        async def _handle_start_validator(self, _params: object) -> Tuple[bool, object]:
-            result = await self.target.start_validator()
-            return True, result
-
-        async def _handle_stop_validator(self, _params: object) -> Tuple[bool, object]:
-            result = await self.target.stop_validator()
-            return True, result
-
-        async def _handle_connect(self, params: object) -> Tuple[bool, object]:
-            if not (isinstance(params, list) and len(params) in {1, 2}):
-                return False, "params must be an array [HOST, [PORT]]"
-
-            host = params[0]
-            if not isinstance(host, str):
-                return False, "host must be a string"
-
-            if len(params) == 2:
-                port = params[1]
-                if not isinstance(port, int):
-                    return False, "port must be an int"
-            else:
-                port = None
-
-            await self.target.connect_eth2_node(host, port)
-            return True, "OK"
-
-        async def _handle_shutdown(self, _params: object) -> Tuple[bool, object]:
-            await self.target.shutdown()
-            return True, None
-
-        async def _handle_get_health(self, _params: object) -> Tuple[bool, object]:
-            result = await self.target.get_health()
-            return True, result
-
-        async def _handle_set_validator_release(self, params: object) -> Tuple[bool, object]:
-            if not isinstance(params, dict):
-                return False, "params must be an JSON object"
-
-            release = ValidatorReleaseSchema().load(params)
-            await self.target.set_validator_release(release)
-            return True, None
+                async with self._handler_lock:
+                    return await operation.handle(self.ctx, request.params)
+            except Exception as err:
+                LOG.warning(f"Exception occurred handling request {request}: {repr(err)}")
+                return RpcResult(False, repr(err))
