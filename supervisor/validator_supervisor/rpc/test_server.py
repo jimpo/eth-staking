@@ -19,6 +19,7 @@ class MockRpcTarget(RpcTarget):
     connect_eth2_node = AsyncMock()
     unlock = AsyncMock()
     shutdown = AsyncMock()
+    import_keystore = AsyncMock()
 
 
 class RpcServerTest(unittest.IsolatedAsyncioTestCase):

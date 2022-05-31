@@ -72,6 +72,10 @@ class RpcClient(RpcTarget):
         async with self.connect_and_auth() as conn:
             return await conn.shutdown()
 
+    async def import_keystore(self, keystore: str, password: str):
+        async with self.connect_and_auth() as conn:
+            return await conn.import_keystore(keystore, password)
+
     @asynccontextmanager
     async def connect(self) -> AsyncGenerator[RpcClientConnection, None]:
         kwargs: Dict[str, Any] = {}
@@ -160,6 +164,18 @@ class RpcClientConnection(RpcTarget):
 
     async def shutdown(self) -> None:
         await self._rpc_call('shutdown')
+
+    async def import_keystore(self, keystore: str, password: str):
+        if "\n" in password:
+            raise ValueError("password cannot contain newlines")
+
+        await self._rpc_call('begin_import_keystore', {'content': keystore})
+
+        self._writer.write(password.encode())
+        self._writer.write(b"\n")
+        await self._writer.drain()
+
+        await self._rpc_call('finish_import_keystore')
 
     async def _rpc_call(self, method: str, params: Optional[object] = None) -> object:
         request = JsonRpcRequest(method, params=params)

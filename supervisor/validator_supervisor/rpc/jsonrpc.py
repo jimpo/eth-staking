@@ -153,3 +153,7 @@ class RpcTarget(ABC):
     @abstractmethod
     async def shutdown(self) -> None:
         pass
+
+    @abstractmethod
+    async def import_keystore(self, keystore: str, password: str) -> None:
+        pass

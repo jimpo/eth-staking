@@ -10,6 +10,9 @@ from .client import RpcClient, RpcError
 from .server import RpcServer, RpcTarget
 
 
+TEST_VALIDATOR = "0xb20e453a8e770ec50ca4129e0fc12b2ac1f3a720f519a124369b0c838c27da04910a8294fb96a6b8d3c7036a74740a32"
+
+
 class MockRpcTarget(RpcTarget):
     start_validator = AsyncMock()
     stop_validator = AsyncMock()
@@ -18,6 +21,7 @@ class MockRpcTarget(RpcTarget):
     connect_eth2_node = AsyncMock()
     unlock = AsyncMock()
     shutdown = AsyncMock()
+    import_keystore = AsyncMock()
 
 
 class RpcServerClientIntegrationTest(unittest.IsolatedAsyncioTestCase):
@@ -67,6 +71,15 @@ class RpcServerClientIntegrationTest(unittest.IsolatedAsyncioTestCase):
         success = await self.client.unlock("bad password")
         self.assertFalse(success)
         self.target.unlock.assert_awaited_with("bad password")
+
+    async def test_import_keystore(self) -> None:
+        with open(f"test_canonical/validators/{TEST_VALIDATOR}/keystore.json", 'r') as f:
+            keystore = f.read()
+        with open(f"test_canonical/validators/{TEST_VALIDATOR}/password.txt", 'r') as f:
+            password = f.read()
+
+        await self.client.import_keystore(keystore, password)
+        self.target.import_keystore.assert_awaited_with(keystore, password)
 
     async def test_handler_exception(self):
         self.target.get_health.side_effect = Exception("WHY? OH WHY?")

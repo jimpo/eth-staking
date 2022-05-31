@@ -28,7 +28,7 @@ LOG = logging.getLogger(__name__)
 class RpcResult:
     success: bool
     result: object
-    check_password: Optional[Type[RpcOperationPasswordCheck]] = None
+    check_password: Optional[RpcOperationPasswordCheck] = None
 
 
 @dataclass
@@ -61,9 +61,8 @@ class RpcOperationPasswordCheck(abc.ABC):
     def method(cls) -> str:
         pass
 
-    @classmethod
     @abc.abstractmethod
-    async def handle(cls, ctx: RpcContext, password: bytes, params: object) -> RpcResult:
+    async def handle(self, ctx: RpcContext, password: bytes, params: object) -> RpcResult:
         pass
 
 
@@ -119,14 +118,13 @@ class BeginUnlockOp(RpcOperation):
 
     @classmethod
     async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
-        return RpcResult(True, BEGIN_UNLOCK_RESULT, CheckUnlockOp)
+        return RpcResult(True, BEGIN_UNLOCK_RESULT, CheckUnlockOp())
 
 
 class CheckUnlockOp(RpcOperationPasswordCheck):
     method = 'check_unlock'
 
-    @classmethod
-    async def handle(cls, ctx: RpcContext, password_bytes: bytes, params: object) -> RpcResult:
+    async def handle(self, ctx: RpcContext, password_bytes: bytes, params: object) -> RpcResult:
         try:
             password = password_bytes.decode('utf-8').strip()
         except UnicodeDecodeError:
@@ -196,6 +194,40 @@ class SetValidatorReleaseOp(RpcOperation):
 
         release = ValidatorReleaseSchema().load(params)
         await ctx.target.set_validator_release(release)
+        return RpcResult(True, None)
+
+
+class ImportKeystoreOp(RpcOperation):
+    method = 'begin_import_keystore'
+
+    @classmethod
+    async def handle(cls, ctx: RpcContext, params: object) -> RpcResult:
+        if not isinstance(params, dict):
+            return RpcResult(False, "params must be an JSON object")
+
+        if 'content' not in params:
+            return RpcResult(False, "params must have a field \"content\"")
+
+        keystore = params['content']
+        if not isinstance(keystore, str):
+            return RpcResult(False, "content must be a JSON-encoded EIP-2335 keystore string")
+
+        return RpcResult(True, None, ImportKeystorePasswordCheck(keystore))
+
+
+class ImportKeystorePasswordCheck(RpcOperationPasswordCheck):
+    method = 'finish_import_keystore'
+
+    def __init__(self, keystore: str):
+        self.keystore = keystore
+
+    async def handle(self, ctx: RpcContext, password_bytes: bytes, params: object) -> RpcResult:
+        try:
+            password = password_bytes.decode('utf-8').strip()
+        except UnicodeDecodeError:
+            return RpcResult(False, "Password is not valid UTF-8")
+
+        await ctx.target.import_keystore(self.keystore, password)
         return RpcResult(True, None)
 
 
@@ -279,6 +311,7 @@ class RpcServer(object):
             GetAuthChallengeOp,
             AuthOp,
             SetValidatorReleaseOp,
+            ImportKeystoreOp,
         ]
 
         def __init__(
@@ -305,7 +338,7 @@ class RpcServer(object):
             self._handler_lock = handler_lock
             self._exit_event = exit_event
             self._password: Optional[bytes] = None
-            self._password_check: Optional[Type[RpcOperationPasswordCheck]] = None
+            self._password_check: Optional[RpcOperationPasswordCheck] = None
 
         async def run(self) -> None:
             try:
