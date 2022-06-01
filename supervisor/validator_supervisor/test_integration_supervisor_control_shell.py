@@ -165,6 +165,18 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
         await self.remote_control.connect_eth2_node('localhost', 2223)
         await self._wait_for(check_connected_to('localhost', 2223), 5)
 
+    async def test_import_keystore(self):
+        await self._wait_for_validator_running(timeout=5)
+
+        resp = await asyncio.wait_for(self.remote_control.stop_validator(), timeout=15)
+        self.assertTrue(resp)
+
+        new_keystore = '{"crypto":{"kdf":{"function":"scrypt","params":{"dklen":32,"n":262144,"r":8,"p":1,"salt":"b7db486a1927f95e077320a34e5853290bfcb0901d31249f1d6788ea07171a88"},"message":""},"checksum":{"function":"sha256","params":{},"message":"b23da76572bfb08282be32f404a1039ca792822cdc08f683a629b4fca84e9efe"},"cipher":{"function":"aes-128-ctr","params":{"iv":"63be2d5dc577e7514c986e117a532fe5"},"message":"ec2ecce57827d8499b44bcc0b1fc4104bab4ff85076157a1261d1f56e9aaaa4e"}},"uuid":"6ea18df9-ec67-4a79-9ad7-666f84f841a5","path":"m/12381/3600/0/0/0","pubkey":"8701c0967b79c665dbb407f4a7fff30937ab3d2bd53ed818bc23daa7b387821036cb026e00cd090849c7472424a31371","version":4,"description":"","name":null}'
+        new_password = 'NfJwD6NcbwjvrQdcRPu7TE7hwdhC8s4wBCZlWxsyLooACjpp'
+        await asyncio.wait_for(
+            self.remote_control.import_keystore(new_keystore, new_password), timeout=15
+        )
+
     async def _wait_for(self, check: Callable[[], Awaitable[bool]], timeout: float):
         poll_interval = 0.1
         for i in range(int(timeout / poll_interval)):

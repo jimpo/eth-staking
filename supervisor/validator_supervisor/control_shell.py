@@ -162,6 +162,22 @@ class ControlShell(cmd.Cmd):
         await conn.shutdown()
         print("OK")
 
+    @_rpc_command
+    async def do_import_keystore(self, conn: RpcClientConnection, arg: str) -> None:
+        args = arg.split()
+        if len(args) == 1:
+            keystore_path = args[0]
+        else:
+            print("usage: import_keystore FILEPATH")
+            return
+
+        with open(keystore_path) as f:
+            keystore = f.read()
+
+        password = getpass.getpass('Password: ')
+        await conn.import_keystore(keystore, password)
+        print("OK")
+
     def do_quit(self, _arg):
         return True
 
