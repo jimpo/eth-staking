@@ -14,9 +14,9 @@ RUN gpg --import /tmp/sigp_pgp_release_key.asc && \
     rm /tmp/sigp_pgp_release_key.asc
 
 ARG ARCH=x86_64
-ARG VERSION=v2.1.5
+ARG VERSION=v2.2.1
 # Double check checksum in addition to PGP sig out of extreme paranoia
-ARG CHECKSUM=a18df901cec5b5b6bb55dde141bc0ab30f41f704da93027391535ef83deb1e4a
+ARG CHECKSUM=05930c3b4c99bd2cbf6aef9d653b02403dcdfdb64de19abf2ad5c15d3526919d
 RUN cd /tmp && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc && \
