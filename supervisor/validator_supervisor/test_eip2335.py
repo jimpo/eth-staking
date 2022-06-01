@@ -1,4 +1,5 @@
 import json
+import marshmallow.exceptions
 import unittest
 
 from .eip2335 import EIP2335KeystoreSchema
@@ -14,6 +15,13 @@ class EIP2335Test(unittest.TestCase):
         keystore_data = json.loads(TEST_KEYSTORE)
         keystore = EIP2335KeystoreSchema().load(keystore_data)
         self.assertEqual(keystore.pubkey, TEST_VALIDATOR[2:])
+
+    def test_deserialize_with_invalid_pubkey(self):
+        keystore_data = json.loads(TEST_KEYSTORE)
+        keystore_data['pubkey'] = \
+            "../b20e453a8e770ec50ca4129e0fc12b2ac1f3a720f519a124369b0c838c27da04910a8294fb96a6b8d3c7036a74740a32"
+        with self.assertRaises(marshmallow.exceptions.ValidationError):
+            keystore = EIP2335KeystoreSchema().load(keystore_data)
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import marshmallow
-from marshmallow import fields, post_load
+from marshmallow import fields, post_load, validate
 from typing import Optional
 
 
@@ -55,7 +55,7 @@ class EIP2335KeystoreSchema(marshmallow.Schema):
     name = fields.Str(allow_none=True)
     path = fields.Str(required=True)
     version = fields.Int(required=True)
-    pubkey = fields.Str(required=True)
+    pubkey = fields.Str(required=True, validate=validate.Regexp(r"[0-9a-f]{96}"))
     uuid = fields.UUID(required=True)
 
     @post_load

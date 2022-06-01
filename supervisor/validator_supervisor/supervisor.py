@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+import json
 import logging
 import os.path
 import shutil
@@ -19,6 +20,7 @@ from typing import Dict, List, Optional, Union
 
 from .backup_archive import BackupArchive, LockedArchiveCorrupted, make_validator_data_backup
 from .config import Config, DynamicConfig, read_dynamic_config, write_dynamic_config
+from .eip2335 import EIP2335KeystoreSchema
 from .exceptions import ValidatorRunning, UnlockRequired, UnknownNode
 from .key_ops import RootKey, IncorrectPassword
 from .promtail import Promtail
@@ -435,7 +437,22 @@ class ValidatorSupervisor(RpcTarget):
         asyncio.create_task(self._shutdown_command())
 
     async def import_keystore(self, keystore: str, password: str) -> None:
-        pass
+        keystore_data = EIP2335KeystoreSchema().load(json.loads(keystore))
+        pubkey = f"0x{keystore_data.pubkey}"
+
+        # This is an assertion as this should be guaranteed by the regex validation on the pubkey
+        # field in the keystore schema
+        assert os.path.normpath(pubkey) == pubkey
+
+        validator_dir = os.path.join(self._validator_canonical_dir, 'validators', pubkey)
+
+        await self.load_backup()
+        os.makedirs(validator_dir, exist_ok=True)
+        with open(os.path.join(validator_dir, 'keystore.json'), 'w') as f:
+            f.write(keystore)
+        with open(os.path.join(validator_dir, 'password.txt'), 'w') as f:
+            f.write(password)
+        await self.save_backup()
 
     async def _shutdown_command(self) -> None:
         LOG.info("Executing shutdown to shut down the host")
@@ -487,7 +504,7 @@ class ValidatorSupervisor(RpcTarget):
         return await create_validator_for_release(
             release,
             self.eth2_network,
-            os.path.join(self._validator_canonical_dir),
+            self._validator_canonical_dir,
             out_log_filepath=log_path,
             err_log_filepath=log_path,
             beacon_node_ports=self._beacon_node_port_maps,
