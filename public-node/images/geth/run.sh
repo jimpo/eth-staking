@@ -5,7 +5,7 @@ case "$ETH2_NETWORK" in
         network_flag=""
         ;;
 
-    pyrmont | prater)
+    goerli)
         network_flag="--goerli"
         ;;
 

@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 RUN apt-get update && \
     apt-get install -y \
@@ -14,18 +14,19 @@ RUN gpg --import /tmp/sigp_pgp_release_key.asc && \
     rm /tmp/sigp_pgp_release_key.asc
 
 ARG ARCH=x86_64
-ARG VERSION=v2.2.1
+ARG VERSION=v2.5.1
 # Double check checksum in addition to PGP sig out of extreme paranoia
-ARG CHECKSUM=05930c3b4c99bd2cbf6aef9d653b02403dcdfdb64de19abf2ad5c15d3526919d
+ARG CHECKSUM=688120433d15b9c26040d141b7d14369efaa3caca471e6c20ba33289d3ef2d37
+ARG PORTABLE=
 RUN cd /tmp && \
-    curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
-    curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc && \
-    gpg --verify lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc 2>&1 | \
+    curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz && \
+    curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz.asc && \
+    gpg --verify lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz.asc 2>&1 | \
 	      grep "Primary key fingerprint: $SIGP_SIGNING_KEY" && \
-    [ "$(sha256sum lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz | cut -d ' ' -f 1)" = "$CHECKSUM" ] && \
-    tar -zxf lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
+    [ "$(sha256sum lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz | cut -d ' ' -f 1)" = "$CHECKSUM" ] && \
+    tar -zxf lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz && \
     cp lighthouse /usr/local/bin/lighthouse && \
-    rm lighthouse lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc
+    rm lighthouse lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz.asc
 
 # Create unprivileged user
 RUN useradd -m somebody

@@ -15,7 +15,7 @@ DEPLOYMENT_CONFIG_FILEPATHS = ['network-name', 'authorized_keys', 'validator-pub
 
 class Eth2Network(Enum):
     MAINNET = "mainnet"
-    PRATER  = "prater"
+    GOERLI  = "goerli"
     PYRMONT = "pyrmont"
 
 

@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 RUN apt-get update && \
     apt-get install -y \
@@ -14,8 +14,8 @@ RUN gpg --import /tmp/prylabs_pgp_release_key.asc && \
     rm /tmp/prylabs_pgp_release_key.asc
 
 ARG ARCH=amd64
-ARG VERSION=v2.1.2
-ARG CHECKSUM=2c394f28a8c5a8bc5f23f085f1bc4098e8d46260dc8d8f1f078584434f8374ee
+ARG VERSION=v2.1.4
+ARG CHECKSUM=80246ccdee12823c0dafec6456524c10e5a689a8a36c6a458a581c92f9cb856d
 ARG BINNAME=beacon-chain
 RUN cd /tmp && \
     curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-linux-$ARCH && \

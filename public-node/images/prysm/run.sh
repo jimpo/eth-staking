@@ -17,10 +17,7 @@ case "$ETH2_NETWORK" in
     mainnet)
         # For mainnet, genesis state is built into the binary, so no need to download it
         ;;
-    prymont)
-        genesis_state_sha256="0f4ab1dec2065c3f545fcd3c6c512ab693aa2057680f41b4906c8179aa0170c6"
-        ;;
-    prater)
+    goerli)
         genesis_state_sha256="23daa70a970034444da4dc04abfab7b7dd08adaadefb1f9764ac56ea58b2086e"
         ;;
     *)

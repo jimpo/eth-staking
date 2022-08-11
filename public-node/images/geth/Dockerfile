@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 RUN apt-get update && \
     apt-get install -y \
@@ -13,8 +13,8 @@ RUN gpg --import /tmp/geth_pgp_release_key.asc && \
     rm /tmp/geth_pgp_release_key.asc
 
 ARG ARCH=amd64
-ARG VERSION=1.10.18-de23cf91
-ARG CHECKSUM=f9dc69489f6c316039332ce674b638c10fc50bdd07c236cc776ddc2f954b67b4
+ARG VERSION=1.10.21-67109427
+ARG CHECKSUM=d0f30a7c9aec2c3a6dbcafa5d598c2830f664e8b604f52a4f0c2ec4af3350463
 RUN cd /tmp && \
     curl -sSLO https://gethstore.blob.core.windows.net/builds/geth-linux-$ARCH-$VERSION.tar.gz && \
     curl -sSLO https://gethstore.blob.core.windows.net/builds/geth-linux-$ARCH-$VERSION.tar.gz.asc && \
