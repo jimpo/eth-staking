@@ -1,19 +1,31 @@
 #!/bin/bash
 
+authrpc_jwtsecret_path="authrpc-secret/jwtsecret"
+while [[ ! -f "$authrpc_jwtsecret_path" ]] ; do
+		echo "Waiting for execution layer to generate authrpc secret..."
+		sleep 10
+done
+
 validator_monitor_file=validator-pubkeys.txt
 validator_monitor_flag=""
 if [[ -s validator-pubkeys.txt ]] ; then
     validator_monitor_flag="--validator-monitor-file $validator_monitor_file"
 fi
 
+while [[ ! -f "$authrpc_jwtsecret_path" ]] ; do
+		echo "Waiting for execution layer to generate authrpc secret..."
+		sleep 10
+done
+
 exec lighthouse beacon_node \
      --disable-upnp \
      --http \
      --http-address 0.0.0.0 \
      --eth1 \
-     --eth1-endpoints http://$ETH1_HOST:8545 \
      --metrics \
      --metrics-address 0.0.0.0 \
+		 --execution-endpoint http://$ETH1_HOST:8551 \
+		 --execution-jwt "$authrpc_jwtsecret_path" \
      $validator_monitor_flag \
      --network "$ETH2_NETWORK" \
      $@

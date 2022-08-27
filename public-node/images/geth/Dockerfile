@@ -13,8 +13,8 @@ RUN gpg --import /tmp/geth_pgp_release_key.asc && \
     rm /tmp/geth_pgp_release_key.asc
 
 ARG ARCH=amd64
-ARG VERSION=1.10.21-67109427
-ARG CHECKSUM=d0f30a7c9aec2c3a6dbcafa5d598c2830f664e8b604f52a4f0c2ec4af3350463
+ARG VERSION=1.10.23-d901d853
+ARG CHECKSUM=292c38fe708caeda6d3ff9f56db949f4036e1ea8cdc255f1301a3770931c97f7
 RUN cd /tmp && \
     curl -sSLO https://gethstore.blob.core.windows.net/builds/geth-linux-$ARCH-$VERSION.tar.gz && \
     curl -sSLO https://gethstore.blob.core.windows.net/builds/geth-linux-$ARCH-$VERSION.tar.gz.asc && \
@@ -30,10 +30,13 @@ RUN useradd -m somebody
 USER somebody
 WORKDIR /home/somebody
 
-RUN mkdir /home/somebody/.ethereum
+RUN mkdir .ethereum
 VOLUME /home/somebody/.ethereum
 
-COPY run.sh /home/somebody/
+RUN mkdir authrpc-secret
+VOLUME /home/somebody/authrpc-secret
 
-EXPOSE 6060 8545 30303 30303/udp
+COPY run.sh .
+
+EXPOSE 6060 8545 8551 30303 30303/udp
 ENTRYPOINT ["./run.sh"]

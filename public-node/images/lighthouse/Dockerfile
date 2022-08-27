@@ -14,10 +14,12 @@ RUN gpg --import /tmp/sigp_pgp_release_key.asc && \
     rm /tmp/sigp_pgp_release_key.asc
 
 ARG ARCH=x86_64
-ARG VERSION=v2.5.1
+ARG VERSION=v3.0.0
 # Double check checksum in addition to PGP sig out of extreme paranoia
-ARG CHECKSUM=688120433d15b9c26040d141b7d14369efaa3caca471e6c20ba33289d3ef2d37
-ARG PORTABLE=
+#ARG CHECKSUM=23e898614d370f16144f5f3c8f3d3e387fed10caa17bad2bb24395d76f18cbc9
+#ARG PORTABLE=-portable
+ARG CHECKSUM=6e0164d8f5074e083b55a161f3e6ecf1038e505334033ceaca37d6c491436d5d
+ARG PORTABLE=-portable
 RUN cd /tmp && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz.asc && \
@@ -33,10 +35,13 @@ RUN useradd -m somebody
 USER somebody
 WORKDIR /home/somebody
 
-RUN mkdir /home/somebody/.lighthouse
+RUN mkdir .lighthouse
 VOLUME /home/somebody/.lighthouse
 
-COPY run.sh /home/somebody/
+RUN mkdir authrpc-secret
+VOLUME /home/somebody/authrpc-secret
+
+COPY run.sh .
 
 EXPOSE 5052 5054 9000 9000/udp
 ENTRYPOINT ["./run.sh"]

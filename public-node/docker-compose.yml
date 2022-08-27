@@ -35,9 +35,11 @@ services:
     networks:
       main:
   geth:
-    build: images/geth
+    build:
+      context: images/geth
     volumes:
       - "geth:/home/somebody/.ethereum"
+      - "authrpc_secret:/home/somebody/authrpc-secret"
     ports:
       - "30303:30303/tcp"
       - "30303:30303/udp"
@@ -48,6 +50,7 @@ services:
     build: images/lighthouse
     volumes:
       - "lighthouse:/home/somebody/.lighthouse"
+      - "authrpc_secret:/home/somebody/authrpc-secret"
       - "./validator-pubkeys.txt:/home/somebody/validator-pubkeys.txt"
     ports:
       - "9000:9000/tcp"
@@ -61,6 +64,7 @@ services:
     build: images/prysm
     volumes:
       - "prysm:/home/somebody/.eth2"
+      - "authrpc_secret:/home/somebody/authrpc-secret"
     environment:
       ETH1_HOST: geth
     ports:
@@ -96,5 +100,6 @@ volumes:
   prysm:
   prometheus:
   lighthouse:
+  authrpc_secret:
   ssh_host_keys:
   supervisor_backups:

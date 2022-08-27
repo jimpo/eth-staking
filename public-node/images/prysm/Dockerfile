@@ -31,9 +31,13 @@ RUN useradd -m somebody
 USER somebody
 WORKDIR /home/somebody
 
-COPY run.sh /home/somebody/
+RUN mkdir .eth2
+VOLUME /home/somebody/.eth2
 
-RUN mkdir /home/somebody/.eth2
+RUN mkdir authrpc-secret
+VOLUME /home/somebody/authrpc-secret
+
+COPY run.sh .
 
 EXPOSE 3500 4000 8080
 ENTRYPOINT ["./run.sh"]
