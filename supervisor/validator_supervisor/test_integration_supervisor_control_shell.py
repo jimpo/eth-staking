@@ -18,6 +18,7 @@ from .validators import ValidatorRelease
 
 ETH2_NETWORK = 'pyrmont'
 PASSWORD = 'password123'
+TEST_ETH_ADDRESS = '0x60c19370a8d1A2Bf9fA9dDb25B4516229D04E5bb'
 TEST_MNEMONIC = b'clog dust clip zone cute decrease correct quantum forget climb buffalo ' \
     b'girl plunge fuel together warfare space cost memory able evolve rebel orient check'
 CONTAINER_NAME = 'TEST_validator-supervisor_supervisor'
@@ -60,6 +61,7 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
             config=Config(
                 eth2_network=ETH2_NETWORK,
                 key_desc=key_desc,
+                fee_recipient=TEST_ETH_ADDRESS,
                 nodes=[self.node, self.node_alias],
                 data_dir=self.data_dir,
                 logs_dir=self.logs_dir,

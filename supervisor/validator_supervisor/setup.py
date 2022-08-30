@@ -106,6 +106,10 @@ def init_config(config_path: str) -> Tuple[Config, RootKey]:
         "Ethereum 2.0 network",
         old_config.eth2_network if old_config else None
     )
+    fee_recipient = read_str(
+        "Fee recipient address",
+        old_config.fee_recipient if old_config else None
+    )
 
     # Doesn't seem necessary to integrate this into the interactive setup.
     print("Nodes can be manually edited in config.yaml")
@@ -138,6 +142,7 @@ def init_config(config_path: str) -> Tuple[Config, RootKey]:
     config = Config(
         eth2_network=eth2_network,
         key_desc=key_desc,
+        fee_recipient=fee_recipient,
         nodes=nodes,
         data_dir=data_dir,
         logs_dir=logs_dir,

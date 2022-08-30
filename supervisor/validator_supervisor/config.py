@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import marshmallow
 from marshmallow import fields, post_load
 import os.path
+import re
 from typing import Any, Dict, List, Optional, Tuple
 import yaml
 import yaml.parser
@@ -45,6 +46,12 @@ class HexDataField(fields.String):
             raise self.make_error('invalid_hex') from err
 
 
+def validate_ethereum_address(value: str):
+    # Does not validate checksum because I don't want to pull in a dependency for that
+    if not re.fullmatch(r"0x[0-9a-fA-F]{40}", value):
+        raise marshmallow.exceptions.ValidationError("Value must be an Ethereum address")
+
+
 @dataclass
 class Config:
     """
@@ -52,6 +59,7 @@ class Config:
     """
     eth2_network: str
     key_desc: KeyDescriptor
+    fee_recipient: str
     nodes: List[SSHConnInfo]
     data_dir: str
     logs_dir: str
@@ -117,6 +125,7 @@ class ConfigSchema(marshmallow.Schema):
     """
     eth2_network = fields.Str(required=True)
     key_desc = fields.Nested(KeyDescriptorSchema, required=True, data_key='key_descriptor')
+    fee_recipient = fields.Str(required=True, validate=validate_ethereum_address)
     nodes = fields.List(fields.Nested(SSHConnInfoSchema), required=True)
     data_dir = fields.Str(required=True)
     logs_dir = fields.Str(required=True)

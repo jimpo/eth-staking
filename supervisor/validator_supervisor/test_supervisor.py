@@ -16,6 +16,7 @@ ETH2_NETWORK = 'pyrmont'
 PASSWORD = 'password123'
 TEST_MNEMONIC = b'clog dust clip zone cute decrease correct quantum forget climb buffalo ' \
     b'girl plunge fuel together warfare space cost memory able evolve rebel orient check'
+TEST_ETH_ADDRESS = '0x60c19370a8d1A2Bf9fA9dDb25B4516229D04E5bb'
 
 TEST_VALIDATOR = "0xb20e453a8e770ec50ca4129e0fc12b2ac1f3a720f519a124369b0c838c27da04910a8294fb96a6b8d3c7036a74740a32"
 with open(f"test_canonical/validators/{TEST_VALIDATOR}/keystore.json") as f:
@@ -40,6 +41,7 @@ class ValidatorSupervisorTest(unittest.IsolatedAsyncioTestCase):
             config=Config(
                 eth2_network=ETH2_NETWORK,
                 key_desc=key_desc,
+                fee_recipient=TEST_ETH_ADDRESS,
                 nodes=[
                     SSHConnInfo(
                         host='localhost',
