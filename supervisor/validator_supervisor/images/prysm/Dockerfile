@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 RUN apt-get update && \
     apt-get install -y \
@@ -14,9 +14,9 @@ RUN gpg --import /tmp/prylabs_pgp_release_key.asc && \
     rm /tmp/prylabs_pgp_release_key.asc
 
 ARG ARCH=amd64
-ARG VERSION=v2.0.0
+ARG VERSION=v3.0.0
 ARG BINNAME=validator
-ARG CHECKSUM=312166c8e6352d6ba8f41d106894b567ec5efa3e9ad5e6f113e7746259b847c0
+ARG CHECKSUM=9fc69b8c940c30195a3e02b80c1a0e3e08781644945affce79d3afbe9213c7c3
 RUN cd /tmp && \
     curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-linux-$ARCH && \
     curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-linux-$ARCH.sig && \

@@ -1,4 +1,4 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 RUN apt-get update && \
     apt-get install -y \
@@ -14,9 +14,9 @@ RUN gpg --import /tmp/sigp_pgp_release_key.asc && \
     rm /tmp/sigp_pgp_release_key.asc
 
 ARG ARCH=x86_64
-ARG VERSION=v2.1.4
+ARG VERSION=v3.0.0
 # Double check checksum in addition to PGP sig out of extreme paranoia
-ARG CHECKSUM=9eb89a69790132f2fb13f605c7c220a3021a89ae165eeccd0d34041922064456
+ARG CHECKSUM=23e898614d370f16144f5f3c8f3d3e387fed10caa17bad2bb24395d76f18cbc9
 RUN cd /tmp && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc && \

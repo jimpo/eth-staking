@@ -2,13 +2,13 @@ FROM rust:1-bullseye AS builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        cmake && \
+        cmake clang && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
 ARG PORTABLE
 ENV PORTABLE $PORTABLE
-ARG COMMIT=v2.0.1
+ARG COMMIT=v3.0.0
 RUN git clone https://github.com/sigp/lighthouse /lighthouse && \
     cd /lighthouse && \
     git checkout $COMMIT && \
@@ -24,7 +24,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g npm
-RUN npm install -g ganache-cli
+RUN npm install -g ganache
 
 COPY --from=builder /usr/local/cargo/bin/lighthouse /usr/local/bin/lighthouse
 COPY --from=builder /usr/local/cargo/bin/lcli /usr/local/bin/lcli

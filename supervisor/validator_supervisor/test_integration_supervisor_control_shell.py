@@ -2,7 +2,6 @@ import asyncio
 import os.path
 import random
 import ssl
-import logging
 import subprocess
 import tempfile
 from typing import Awaitable, Callable

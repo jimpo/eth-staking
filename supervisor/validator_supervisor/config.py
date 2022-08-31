@@ -21,8 +21,8 @@ SUPERVISOR_LOG_NAME = 'supervisor.log'
 DEFAULT_BACKUP_FILENAME = 'supervisor-backup.bin'
 DEFAULT_VALIDATOR_RELEASE = ValidatorRelease(
     impl_name='lighthouse',
-    version='v1.5.2',
-    checksum='924a5441c3fb6f01da75273290324af85aae2f66e84fdce1899e8b265176c782',
+    version='v3.0.0',
+    checksum='23e898614d370f16144f5f3c8f3d3e387fed10caa17bad2bb24395d76f18cbc9',
 )
 
 
