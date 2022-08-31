@@ -52,6 +52,7 @@ class ValidatorRunner(SimpleSubprocess, ABC):
     def __init__(
             self,
             eth2_network: str,
+            fee_recipient: str,
             datadir: str,
             out_log_filepath: str,
             err_log_filepath: str,
@@ -61,6 +62,7 @@ class ValidatorRunner(SimpleSubprocess, ABC):
     ):
         super().__init__(out_log_filepath, err_log_filepath)
         self.eth2_network = eth2_network
+        self.fee_recipient = fee_recipient
         self.datadir = datadir
         self.release = release
         self.beacon_node_ports = beacon_node_ports

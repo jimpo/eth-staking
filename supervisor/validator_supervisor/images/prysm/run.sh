@@ -49,6 +49,7 @@ validator \
     --wallet-password-file=$wallet_password_file \
     --beacon-rpc-gateway-provider="$BEACON_HTTP_ENDPOINT" \
     --beacon-rpc-provider="$BEACON_GRPC_ENDPOINT" \
+    --suggested-fee-recipient="$FEE_RECIPIENT" \
     &
 
 validator_pid=$!

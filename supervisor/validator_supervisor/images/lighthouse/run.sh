@@ -26,6 +26,7 @@ lighthouse validator \
     --beacon-nodes "$BEACON_NODES" \
     --metrics \
     --metrics-allow-origin '*' \
+    --suggested-fee-recipient="$FEE_RECIPIENT" \
     &
 
 validator_pid=$!

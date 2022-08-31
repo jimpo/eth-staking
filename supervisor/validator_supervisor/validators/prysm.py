@@ -13,6 +13,7 @@ class PrysmValidator(ValidatorRunner):
     async def _launch_docker_opts(self, port_map: BeaconNodePortMap) -> List[str]:
         return [
             '-e', f"ETH2_NETWORK={self.eth2_network}",
+            '-e', f"FEE_RECIPIENT={self.fee_recipient}",
             '-e', f"BEACON_HTTP_ENDPOINT=localhost:{port_map.prysm_http}",
             '-e', f"BEACON_GRPC_ENDPOINT=localhost:{port_map.prysm_grpc}",
             '--volume', f"{os.path.abspath(self.datadir)}:/app/canonical",

@@ -17,6 +17,7 @@ _VALIDATOR_CLASSES: Dict[str, Type[ValidatorRunner]] = {
 async def create_validator_for_release(
         release: ValidatorRelease,
         eth2_network: str,
+        fee_recipient: str,
         datadir: str,
         out_log_filepath: str,
         err_log_filepath: str,
@@ -42,6 +43,7 @@ async def create_validator_for_release(
 
     validator = cls(
         eth2_network,
+        fee_recipient,
         datadir,
         out_log_filepath,
         err_log_filepath,

@@ -504,6 +504,7 @@ class ValidatorSupervisor(RpcTarget):
         return await create_validator_for_release(
             release,
             self.eth2_network,
+            self.config.fee_recipient,
             self._validator_canonical_dir,
             out_log_filepath=log_path,
             err_log_filepath=log_path,

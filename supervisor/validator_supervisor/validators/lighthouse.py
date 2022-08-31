@@ -13,6 +13,7 @@ class LighthouseValidator(ValidatorRunner):
     async def _launch_docker_opts(self, port_map: BeaconNodePortMap) -> List[str]:
         return [
             '-e', f"ETH2_NETWORK={self.eth2_network}",
+            '-e', f"FEE_RECIPIENT={self.fee_recipient}",
             '-e', f"BEACON_NODES=http://localhost:{port_map.lighthouse_rpc}",
             '--volume', f"{os.path.abspath(self.datadir)}:/app/canonical",
             '--tmpfs', "/app/lighthouse",
