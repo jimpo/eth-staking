@@ -29,9 +29,9 @@ class RpcServerClientIntegrationTest(unittest.IsolatedAsyncioTestCase):
         self.tmpdir = tempfile.TemporaryDirectory()
         self.sock_path = os.path.join(self.tmpdir.name, 'validator_supervisor.sock')
 
-        server_ssl = ssl.SSLContext()
+        server_ssl = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         server_ssl.load_cert_chain('test/config/cert.pem', 'test/config/key.pem')
-        client_ssl = ssl.SSLContext()
+        client_ssl = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         client_ssl.load_verify_locations('test/config/cert.pem')
         client_ssl.verify_mode = ssl.CERT_REQUIRED
 

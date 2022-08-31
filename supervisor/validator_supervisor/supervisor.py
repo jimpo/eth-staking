@@ -14,7 +14,7 @@ import json
 import logging
 import os.path
 import shutil
-from ssl import SSLContext
+from ssl import SSLContext, PROTOCOL_TLS_SERVER
 import tempfile
 from typing import Dict, List, Optional, Union
 
@@ -183,7 +183,7 @@ class ValidatorSupervisor(RpcTarget):
 
         ssl = None
         if config.ssl_cert_file:
-            ssl = SSLContext()
+            ssl = SSLContext(PROTOCOL_TLS_SERVER)
             ssl.load_cert_chain(config.ssl_cert_file, config.ssl_key_file)
         self._rpc_server = RpcServer(self, config.rpc_users, self.rpc_sock_path, ssl)
         self._exit_event = exit_event

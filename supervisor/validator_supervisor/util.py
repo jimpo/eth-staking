@@ -7,12 +7,12 @@ What, you think a project could exist without one?
 import asyncio
 import signal
 from asyncio import Task, FIRST_COMPLETED
-from collections.abc import Coroutine
+from collections.abc import Iterable
 import logging
 from pkg_resources import resource_filename
 import prctl
 from subprocess import PIPE
-from typing import Awaitable, Dict, List, Optional, Union
+from typing import Awaitable, Dict, Optional
 
 from .exceptions import DockerBuildException
 
@@ -20,22 +20,19 @@ LOG = logging.getLogger(__name__)
 
 
 async def either_or_interrupt(
-        awaitable: Union[Task, Coroutine],
-        interrupts: List[Awaitable],
+        awaitable: Awaitable,
+        interrupts: Iterable[Awaitable],
 ) -> Optional[Task]:
     """
     Wait for either the given awaitable or for an interrupt event. If the interrupt happens first,
     return the pending task. All interrupts must be cancellable.
 
     :param awaitable:
-    :param interrupts: a list of cancellable interrupts
+    :param interrupts: a collection of cancellable interrupts
     :return: the pending task if exited early or None if it completed
     """
-    if isinstance(awaitable, Task):
-        main_task = awaitable
-    else:
-        main_task = asyncio.create_task(awaitable)
-    wait_tasks = interrupts
+    main_task = asyncio.ensure_future(awaitable)
+    wait_tasks = list(map(asyncio.ensure_future, interrupts))
     wait_tasks.append(main_task)
     _done, pending = await asyncio.wait(wait_tasks, return_when=FIRST_COMPLETED)
     for interrupt_task in pending - {main_task}:
@@ -46,7 +43,7 @@ async def either_or_interrupt(
 class ExitMixin(object):
     _exit_event: asyncio.Event
 
-    async def _either_or_exit(self, awaitable: Union[Task, Coroutine]) -> Optional[Task]:
+    async def _either_or_exit(self, awaitable: Awaitable) -> Optional[Task]:
         """
         Wait for either the given awaitable or for this to exit. If the exit happens first, return
         the pending task.

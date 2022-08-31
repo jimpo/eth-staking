@@ -118,7 +118,11 @@ class SSHClient(object):
         if not await self.check_host_key():
             return False
 
-        cmd = ['scp', '-o', f"UserKnownHostsFile={self.known_hosts_file}"]
+        cmd = [
+            'scp',
+            '-o', f"UserKnownHostsFile={self.known_hosts_file}",
+            '-o', 'IdentitiesOnly=yes',
+        ]
         if self.node.identity_file:
             cmd.extend(['-i', self.node.identity_file])
         if self.node.port != SSH_DEFAULT_PORT:
@@ -179,7 +183,7 @@ class SSHClient(object):
             f.write(line)
 
     async def _ssh_keyscan(self) -> bytes:
-        cmd = ["ssh-keyscan"]
+        cmd = ["ssh-keyscan", "-t", "ed25519"]
         if self.node.port != SSH_DEFAULT_PORT:
             cmd.extend(["-p", str(self.node.port)])
         cmd.append(self.node.host)
@@ -188,7 +192,7 @@ class SSHClient(object):
         proc = await asyncio.create_subprocess_exec(*cmd, stdout=PIPE, stderr=PIPE)
         stdout, stderr = await proc.communicate()
         if proc.returncode != 0:
-            raise SSHKeyscanFailure(f"{cmd_str} failed: {stderr!r}")
+            raise SSHKeyscanFailure(f"{cmd_str} failed with status {proc.returncode}: {stderr!r}")
         if not stdout:
             raise SSHKeyscanFailure(f"{cmd_str} exited with no output")
         return stdout
@@ -205,7 +209,11 @@ class SSHClient(object):
         return match[0]
 
     def ssh_command(self, forwards: Iterable[SSHForward]) -> List[str]:
-        cmd = ['ssh', '-o', f"UserKnownHostsFile={self.known_hosts_file}"]
+        cmd = [
+            'ssh',
+            '-o', f"UserKnownHostsFile={self.known_hosts_file}",
+            '-o', 'IdentitiesOnly=yes',
+        ]
         if self.node.identity_file:
             cmd.extend(['-i', self.node.identity_file])
         if self.node.port != 22:

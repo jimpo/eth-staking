@@ -282,8 +282,9 @@ async def start_supervised_multi(
     if not subprocs:
         return []
 
-    tasks_done, _ = await asyncio.wait(
-        [start_supervised(name, subproc, retry_delay, stop_event) for name, subproc in subprocs],
-        return_when=FIRST_EXCEPTION
-    )
+    task_start_tasks = [
+        asyncio.create_task(start_supervised(name, subproc, retry_delay, stop_event))
+        for name, subproc in subprocs
+    ]
+    tasks_done, _ = await asyncio.wait(task_start_tasks, return_when=FIRST_EXCEPTION)
     return [task.result() for task in tasks_done]

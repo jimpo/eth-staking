@@ -50,7 +50,8 @@ class SSHTunnelTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(2, len(output_lines))
         self.assertRegex(
             output_lines[1].strip(),
-            r"ssh -o UserKnownHostsFile=\S+ -i test/config/ssh_id\.key -p 2222 "
+            r"ssh -o UserKnownHostsFile=\S+ -o IdentitiesOnly=yes "
+            r"-i test/config/ssh_id\.key -p 2222 "
             r"-L localhost:3005:loki:3100 -R localhost:8000:localhost:8005 somebody@localhost"
         )
 

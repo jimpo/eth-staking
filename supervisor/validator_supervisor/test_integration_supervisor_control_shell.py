@@ -2,6 +2,7 @@ import asyncio
 import os.path
 import random
 import ssl
+import logging
 import subprocess
 import tempfile
 from typing import Awaitable, Callable
@@ -81,7 +82,7 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
         self._generate_initial_backup()
         self.supervisor_task = asyncio.create_task(self.supervisor.run())
 
-        client_ssl = ssl.SSLContext()
+        client_ssl = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         client_ssl.load_verify_locations('test/config/cert.pem')
         client_ssl.verify_mode = ssl.CERT_REQUIRED
         self.remote_control = RpcClient(
