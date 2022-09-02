@@ -36,9 +36,9 @@ esac
 set_network_flags
 exec beacon-chain --accept-terms-of-use \
      $network_flags \
-     --rpc-host 0.0.0.0 \
-     --grpc-gateway-host 0.0.0.0 \
-     --monitoring-host 0.0.0.0 \
+     --rpc-host host.docker.internal \
+     --grpc-gateway-host host.docker.internal \
+     --monitoring-host host.docker.internal \
      --http-web3provider http://$ETH1_HOST:8551 \
 		 --jwt-secret "$authrpc_jwtsecret_path" \
      $@

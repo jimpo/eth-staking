@@ -22,14 +22,14 @@ fi
 
 exec geth \
      --http \
-     --http.addr 0.0.0.0 \
+     --http.addr host.docker.internal \
      --http.api eth,net \
      --http.vhosts '*' \
-		 --authrpc.addr 0.0.0.0 \
+		 --authrpc.addr host.docker.internal \
 		 --authrpc.vhosts '*' \
 		 --authrpc.jwtsecret "$authrpc_jwtsecret_path" \
      --metrics \
      --pprof \
-     --pprof.addr 0.0.0.0 \
+     --pprof.addr host.docker.internal \
      $network_flag \
      $@

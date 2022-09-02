@@ -31,15 +31,15 @@ scrape_configs:
   - job_name: 'geth'
     metrics_path: /debug/metrics/prometheus
     static_configs:
-      - targets: ['geth:6060']
+      - targets: ['host.docker.internal:6060']
 
   - job_name: 'lighthouse_bn'
     static_configs:
-      - targets: ['lighthouse:5054']
+      - targets: ['host.docker.internal:5054']
 
   - job_name: 'prysm_bn'
     static_configs:
-      - targets: ['prysm:8080']
+      - targets: ['host.docker.internal:8080']
 
   - job_name: 'lighthouse_vc'
     static_configs:

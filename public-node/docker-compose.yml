@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   grafana:
     build:
@@ -23,6 +22,8 @@ services:
     restart: always
     networks:
       main:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   promtail:
     build: images/promtail
     volumes:
@@ -34,6 +35,8 @@ services:
     restart: always
     networks:
       main:
+    depends_on:
+      - loki
   geth:
     build:
       context: images/geth
@@ -44,8 +47,9 @@ services:
       - "30303:30303/tcp"
       - "30303:30303/udp"
     restart: always
-    networks:
-      main:
+    network_mode: host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   lighthouse:
     build: images/lighthouse
     volumes:
@@ -56,23 +60,25 @@ services:
       - "9000:9000/tcp"
       - "9000:9000/udp"
     environment:
-      ETH1_HOST: geth
+      ETH1_HOST: host.docker.internal
     restart: always
-    networks:
-      main:
+    network_mode: host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   prysm:
     build: images/prysm
     volumes:
       - "prysm:/home/somebody/.eth2"
       - "authrpc_secret:/home/somebody/authrpc-secret"
     environment:
-      ETH1_HOST: geth
+      ETH1_HOST: host.docker.internal
     ports:
       - "12000:12000/udp"
       - "13000:13000/tcp"
     restart: always
-    networks:
-      main:
+    network_mode: host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
   ssh:
     build: images/ssh
     expose:
@@ -89,6 +95,8 @@ services:
       main:
         aliases:
           - validator-proxy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 networks:
   main:
     driver: bridge

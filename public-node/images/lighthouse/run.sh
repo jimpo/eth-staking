@@ -17,13 +17,15 @@ while [[ ! -f "$authrpc_jwtsecret_path" ]] ; do
 		sleep 10
 done
 
+docker_internal_ip=$(getent hosts host.docker.internal | cut -d ' ' -f1)
+
 exec lighthouse beacon_node \
      --disable-upnp \
      --http \
-     --http-address 0.0.0.0 \
+     --http-address "$docker_internal_ip" \
      --eth1 \
      --metrics \
-     --metrics-address 0.0.0.0 \
+     --metrics-address "$docker_internal_ip" \
 		 --execution-endpoint http://$ETH1_HOST:8551 \
 		 --execution-jwt "$authrpc_jwtsecret_path" \
      $validator_monitor_flag \
