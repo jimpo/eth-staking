@@ -14,8 +14,8 @@ RUN gpg --import /tmp/prylabs_pgp_release_key.asc && \
     rm /tmp/prylabs_pgp_release_key.asc
 
 ARG ARCH=amd64
-ARG VERSION=v2.1.4
-ARG CHECKSUM=80246ccdee12823c0dafec6456524c10e5a689a8a36c6a458a581c92f9cb856d
+ARG VERSION=v3.1.1
+ARG CHECKSUM=917c37f41506182da7061aa2e9a15bdecc5d30eaafdc2688c9b0fba7073a7d05
 ARG BINNAME=beacon-chain
 RUN cd /tmp && \
     curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-linux-$ARCH && \
