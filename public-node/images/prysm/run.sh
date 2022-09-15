@@ -33,12 +33,21 @@ case "$ETH2_NETWORK" in
         ;;
 esac
 
+validator_monitor_file=validator-indices.txt
+validator_monitor_flag=""
+if [[ -f "$validator_monitor_file" ]] ; then
+		for index in $(cat $validator_monitor_file) ; do
+				validator_monitor_flag="$validator_monitor_flag --monitor-indices $index"
+		done
+fi
+
 set_network_flags
 exec beacon-chain --accept-terms-of-use \
      $network_flags \
      --rpc-host host.docker.internal \
      --grpc-gateway-host host.docker.internal \
      --monitoring-host host.docker.internal \
-     --http-web3provider http://$ETH1_HOST:8551 \
+     --execution-endpoint http://$ETH1_HOST:8551 \
 		 --jwt-secret "$authrpc_jwtsecret_path" \
+		 $validator_monitor_flag \
      $@

@@ -60,7 +60,10 @@ rm -rf /services
 mkdir /services
 
 # Initialize Docker services
-cp -r docker-compose.yml images authorized_keys validator-pubkeys.txt /services
+cp -r \
+	 docker-compose.yml images authorized_keys \
+	 validator-pubkeys.txt validator-indices.txt \
+	 /services
 docker compose --project-directory /services build --pull
 
 # Configure Docker daemon

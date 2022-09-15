@@ -11,7 +11,8 @@ import yaml
 
 CONFIG_FILEPATHS = \
     ['install.sh', 'docker-services.service', 'docker-daemon.json'] + glob.glob('images/*/*')
-DEPLOYMENT_CONFIG_FILEPATHS = ['network-name', 'authorized_keys', 'validator-pubkeys.txt']
+DEPLOYMENT_CONFIG_FILEPATHS = \
+    ['network-name', 'authorized_keys', 'validator-pubkeys.txt', 'validator-indices.txt']
 
 class Eth2Network(Enum):
     MAINNET = "mainnet"

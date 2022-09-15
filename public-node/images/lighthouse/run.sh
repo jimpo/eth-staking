@@ -8,7 +8,7 @@ done
 
 validator_monitor_file=validator-pubkeys.txt
 validator_monitor_flag=""
-if [[ -s validator-pubkeys.txt ]] ; then
+if [[ -s "$validator_monitor_file" ]] ; then
     validator_monitor_flag="--validator-monitor-file $validator_monitor_file"
 fi
 

@@ -56,9 +56,6 @@ services:
       - "lighthouse:/home/somebody/.lighthouse"
       - "authrpc_secret:/home/somebody/authrpc-secret"
       - "./validator-pubkeys.txt:/home/somebody/validator-pubkeys.txt"
-    ports:
-      - "9000:9000/tcp"
-      - "9000:9000/udp"
     environment:
       ETH1_HOST: host.docker.internal
     restart: always
@@ -70,11 +67,9 @@ services:
     volumes:
       - "prysm:/home/somebody/.eth2"
       - "authrpc_secret:/home/somebody/authrpc-secret"
+      - "./validator-indices.txt:/home/somebody/validator-indices.txt"
     environment:
       ETH1_HOST: host.docker.internal
-    ports:
-      - "12000:12000/udp"
-      - "13000:13000/tcp"
     restart: always
     network_mode: host
     extra_hosts:
