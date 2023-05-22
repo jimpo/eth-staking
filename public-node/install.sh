@@ -64,7 +64,8 @@ cp -r \
 	 docker-compose.yml images authorized_keys \
 	 validator-pubkeys.txt validator-indices.txt \
 	 /services
-docker compose --project-directory /services build --pull
+docker compose --project-directory /services pull
+docker compose --project-directory /services build
 
 # Configure Docker daemon
 # If docker-daemon.json changed, restart Docker service

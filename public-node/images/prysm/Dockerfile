@@ -14,18 +14,18 @@ RUN gpg --import /tmp/prylabs_pgp_release_key.asc && \
     rm /tmp/prylabs_pgp_release_key.asc
 
 ARG ARCH=amd64
-ARG VERSION=v3.1.1
-ARG CHECKSUM=917c37f41506182da7061aa2e9a15bdecc5d30eaafdc2688c9b0fba7073a7d05
+ARG VERSION=v4.0.4
+ARG CHECKSUM=af2906ef0de211c702af7dc375fe86b89014d077947a7aee2ddef68c278d5f1c
 ARG BINNAME=beacon-chain
 RUN cd /tmp && \
-    curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-linux-$ARCH && \
-    curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-linux-$ARCH.sig && \
-    gpg --verify $BINNAME-$VERSION-linux-$ARCH.sig 2>&1 | \
+    curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-modern-linux-$ARCH && \
+    curl -sSLO https://github.com/prysmaticlabs/prysm/releases/download/$VERSION/$BINNAME-$VERSION-modern-linux-$ARCH.sig && \
+    gpg --verify $BINNAME-$VERSION-modern-linux-$ARCH.sig 2>&1 | \
         grep "Primary key fingerprint: $PRYLABS_SIGNING_KEY" && \
-    [ "$(sha256sum $BINNAME-$VERSION-linux-$ARCH | cut -d ' ' -f 1)" = "$CHECKSUM" ] && \
-    cp $BINNAME-$VERSION-linux-$ARCH /usr/local/bin/$BINNAME && \
+    [ "$(sha256sum $BINNAME-$VERSION-modern-linux-$ARCH | cut -d ' ' -f 1)" = "$CHECKSUM" ] && \
+    cp $BINNAME-$VERSION-modern-linux-$ARCH /usr/local/bin/$BINNAME && \
     chmod +x /usr/local/bin/$BINNAME && \
-    rm $BINNAME-$VERSION-linux-$ARCH $BINNAME-$VERSION-linux-$ARCH.sig
+    rm $BINNAME-$VERSION-modern-linux-$ARCH $BINNAME-$VERSION-modern-linux-$ARCH.sig
 
 RUN useradd -m somebody
 USER somebody

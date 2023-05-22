@@ -13,8 +13,8 @@ RUN gpg --import /tmp/geth_pgp_release_key.asc && \
     rm /tmp/geth_pgp_release_key.asc
 
 ARG ARCH=amd64
-ARG VERSION=1.10.25-69568c55
-ARG CHECKSUM=017b180a7cdb2a56deb36204b61532e6959f17236bf52eac427c9aa8554e16c2
+ARG VERSION=1.11.6-ea9e62ca
+ARG CHECKSUM=68abe17b0df70a64c4507f3ed37f6ac24e69ae116cedc43d3d290a006235942f
 RUN cd /tmp && \
     curl -sSLO https://gethstore.blob.core.windows.net/builds/geth-linux-$ARCH-$VERSION.tar.gz && \
     curl -sSLO https://gethstore.blob.core.windows.net/builds/geth-linux-$ARCH-$VERSION.tar.gz.asc && \
