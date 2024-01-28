@@ -28,6 +28,7 @@ exec lighthouse beacon_node \
      --metrics-address "$docker_internal_ip" \
 		 --execution-endpoint http://$ETH1_HOST:8551 \
 		 --execution-jwt "$authrpc_jwtsecret_path" \
+		 --builder $BUILDER_URL \
      $validator_monitor_flag \
      --network "$ETH2_NETWORK" \
      $@

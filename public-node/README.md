@@ -8,6 +8,7 @@ These servers are meant to be run redundantly on multiple different cloud infras
 - [Prometheus](https://prometheus.io/), a metrics collection and monitoring system
 - [Loki](https://grafana.com/oss/loki/), a log aggregation system
 - [Grafana](https://grafana.com/grafana/), for visualizing, exploring, and alerting on metrics and logs
+- [mev-boost](https://github.com/flashbots/mev-boost), a service for outsourcing block building to the Flashbots marketplace
 - An SSH bastion server for securely accessing private services like the Ethereum RPC interfaces and Grafana
 
 These services are all run in [Docker](https://www.docker.com/products/container-runtime) containers on an [Ubuntu](https://ubuntu.com/) host OS.

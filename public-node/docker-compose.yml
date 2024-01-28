@@ -58,22 +58,33 @@ services:
       - "./validator-pubkeys.txt:/home/somebody/validator-pubkeys.txt"
     environment:
       ETH1_HOST: host.docker.internal
+      BUILDER_URL: "http://host.docker.internal:18550"
     restart: always
     network_mode: host
     extra_hosts:
       - "host.docker.internal:host-gateway"
-  prysm:
-    build: images/prysm
-    volumes:
-      - "prysm:/home/somebody/.eth2"
-      - "authrpc_secret:/home/somebody/authrpc-secret"
-      - "./validator-indices.txt:/home/somebody/validator-indices.txt"
-    environment:
-      ETH1_HOST: host.docker.internal
+  mev-boost:
+    build:
+      context: images/mev-boost
     restart: always
-    network_mode: host
+    ports:
+      - "172.17.0.1:18550:18550"
+    networks:
+      main:
     extra_hosts:
       - "host.docker.internal:host-gateway"
+  # prysm:
+  #   build: images/prysm
+  #   volumes:
+  #     - "prysm:/home/somebody/.eth2"
+  #     - "authrpc_secret:/home/somebody/authrpc-secret"
+  #     - "./validator-indices.txt:/home/somebody/validator-indices.txt"
+  #   environment:
+  #     ETH1_HOST: host.docker.internal
+  #   restart: always
+  #   network_mode: host
+  #   extra_hosts:
+  #    - "host.docker.internal:host-gateway"
   ssh:
     build: images/ssh
     expose:

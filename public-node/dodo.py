@@ -25,7 +25,9 @@ def generate_docker_compose_file(deployment: str):
     with open('docker-compose.yml', 'r') as f:
         spec = yaml.load(f, Loader=yaml.Loader)
 
-    for service in ('geth', 'lighthouse', 'prysm'):
+    for service in ('geth', 'lighthouse', 'prysm', 'mev-boost'):
+        if service not in spec['services']:
+            continue
         if 'environment' not in spec['services'][service]:
             spec['services'][service]['environment'] = {}
         spec['services'][service]['environment']['ETH2_NETWORK'] = network.value
