@@ -27,6 +27,7 @@ lighthouse validator \
     --metrics \
     --metrics-allow-origin '*' \
     --suggested-fee-recipient="$FEE_RECIPIENT" \
+		--prefer-builder-proposals \
     &
 
 validator_pid=$!
