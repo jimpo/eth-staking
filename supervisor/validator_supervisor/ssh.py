@@ -212,10 +212,12 @@ class SSHClient(object):
         cmd = [
             'ssh',
             '-o', f"UserKnownHostsFile={self.known_hosts_file}",
-            '-o', 'IdentitiesOnly=yes',
         ]
         if self.node.identity_file:
-            cmd.extend(['-i', self.node.identity_file])
+            cmd.extend([
+                '-i', self.node.identity_file,
+                '-o', 'IdentitiesOnly=yes',
+            ])
         if self.node.port != 22:
             cmd.extend(['-p', str(self.node.port)])
         for tunnel in forwards:
