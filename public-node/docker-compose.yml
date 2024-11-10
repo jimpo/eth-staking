@@ -37,11 +37,24 @@ services:
       main:
     depends_on:
       - loki
-  geth:
+  # geth:
+  #   build:
+  #     context: images/geth
+  #   volumes:
+  #     - "geth:/home/somebody/.ethereum"
+  #     - "authrpc_secret:/home/somebody/authrpc-secret"
+  #   ports:
+  #     - "30303:30303/tcp"
+  #     - "30303:30303/udp"
+  #   restart: always
+  #   network_mode: host
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  reth:
     build:
-      context: images/geth
+      context: images/reth
     volumes:
-      - "geth:/home/somebody/.ethereum"
+      - "reth:/home/somebody/.local/share/reth"
       - "authrpc_secret:/home/somebody/authrpc-secret"
     ports:
       - "30303:30303/tcp"
@@ -111,6 +124,7 @@ volumes:
   loki:
   promtail:
   geth:
+  reth:
   prysm:
   prometheus:
   lighthouse:

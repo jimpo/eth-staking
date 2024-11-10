@@ -1,4 +1,4 @@
-FROM ubuntu:jammy
+FROM ubuntu:noble
 
 RUN apt-get update && \
     apt-get install -y \
@@ -14,21 +14,18 @@ RUN gpg --import /tmp/sigp_pgp_release_key.asc && \
     rm /tmp/sigp_pgp_release_key.asc
 
 ARG ARCH=x86_64
-ARG VERSION=v5.1.3
+ARG VERSION=v5.3.0
 # Double check checksum in addition to PGP sig out of extreme paranoia
-#ARG CHECKSUM=1e91ecab827649ac8ea0cfbb11ee2fb159cecd6ac5125e56dd27004225b128c9
-#ARG PORTABLE=-portable
-ARG CHECKSUM=9426e42b94cc435d51bc7c86d0c30383c2243e4fa83cc3e7403189b4683cbeeb
-ARG PORTABLE=
+ARG CHECKSUM=d10bb36a738994a048e742e179f310a091c0f2299f0bc9dcf0676dde906ccf5c
 RUN cd /tmp && \
-    curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz && \
-    curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz.asc && \
-    gpg --verify lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz.asc 2>&1 | \
+    curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
+    curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc && \
+    gpg --verify lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc 2>&1 | \
 	      grep "Primary key fingerprint: $SIGP_SIGNING_KEY" && \
-    [ "$(sha256sum lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz | cut -d ' ' -f 1)" = "$CHECKSUM" ] && \
-    tar -zxf lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz && \
+    [ "$(sha256sum lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz | cut -d ' ' -f 1)" = "$CHECKSUM" ] && \
+    tar -zxf lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
     cp lighthouse /usr/local/bin/lighthouse && \
-    rm lighthouse lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz lighthouse-$VERSION-$ARCH-unknown-linux-gnu$PORTABLE.tar.gz.asc
+    rm lighthouse lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc
 
 # Create unprivileged user
 RUN useradd -m somebody
