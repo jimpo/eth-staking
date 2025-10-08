@@ -14,6 +14,11 @@ CONFIG_FILEPATHS = \
 DEPLOYMENT_CONFIG_FILEPATHS = \
     ['network-name', 'authorized_keys', 'validator-pubkeys.txt', 'validator-indices.txt']
 
+DOIT_CONFIG = {
+    'default_tasks': ['update_script'],
+}
+
+
 class Eth2Network(Enum):
     MAINNET = "mainnet"
     GOERLI  = "goerli"
@@ -25,7 +30,7 @@ def generate_docker_compose_file(deployment: str):
     with open('docker-compose.yml', 'r') as f:
         spec = yaml.load(f, Loader=yaml.Loader)
 
-    for service in ('reth', 'lighthouse', 'prysm', 'mev-boost'):
+    for service in ('reth', 'lighthouse', 'mev-boost'):
         if service not in spec['services']:
             continue
         if 'environment' not in spec['services'][service]:
@@ -110,6 +115,25 @@ def task_update_script():
             ),
             'actions': [functools.partial(generate_install_script, 'update', deployment)],
         }
+
+
+def task_update_nodes():
+    """Executes the upgrade script on a node."""
+    for deployment in _deployments():
+        nodes_path = os.path.join('deployments', deployment, 'nodes.yml')
+        update_script = f"generated/{deployment}/update.sh"
+        if os.path.isfile(nodes_path):
+            with open(nodes_path, 'r') as f:
+                nodes = yaml.load(f, Loader=yaml.Loader)
+            for name, info in nodes.items():
+                user = info['user']
+                addr = info['addr']
+                cmd = [f"ssh {user}@{addr} \"sh -s\" < {update_script}"]
+                yield {
+                    'name': name,
+                    'file_dep': [update_script],
+                    'actions': cmd,
+                }
 
 
 def _deployments() -> Generator[None, None, str]:
