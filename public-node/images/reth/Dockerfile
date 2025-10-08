@@ -6,15 +6,15 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ARG RETH_SIGNING_KEY="A3AE 097C 8909 3A12 4049  DF1F 5391 A3C4 1005 30B4"
+ARG RETH_SIGNING_KEY="50FB 7CC5 5B2E 8AFA 59FE  03B7 AA5E D56A 7FBF 253E"
 COPY reth_pgp_release_key.asc /tmp/
 RUN gpg --import /tmp/reth_pgp_release_key.asc && \
     gpg --list-keys "$RETH_SIGNING_KEY" >/dev/null 2>&1 && \
     rm /tmp/reth_pgp_release_key.asc
 
 ARG ARCH_TRIPLE=x86_64-unknown-linux-gnu
-ARG VERSION=v1.1.1
-ARG CHECKSUM=6777452e78beb6da1a4073bfa7400dca958ea8d329feb5196c846140b136e526
+ARG VERSION=v1.8.2
+ARG CHECKSUM=b269b94d2e1fca291977fb2af191161e203ad043a15f8cf72f2ede6308ea7b25
 RUN cd /tmp && \
 		curl -sSLO https://github.com/paradigmxyz/reth/releases/download/$VERSION/reth-$VERSION-$ARCH_TRIPLE.tar.gz && \
 		curl -sSLO https://github.com/paradigmxyz/reth/releases/download/$VERSION/reth-$VERSION-$ARCH_TRIPLE.tar.gz.asc && \

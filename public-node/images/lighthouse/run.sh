@@ -23,7 +23,6 @@ exec lighthouse beacon_node \
 		 --disable-upnp \
 		 --http \
 		 --http-address "$docker_internal_ip" \
-		 --eth1 \
 		 --metrics \
 		 --metrics-address "$docker_internal_ip" \
 		 --execution-endpoint http://$ETH1_HOST:8551 \

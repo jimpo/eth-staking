@@ -37,19 +37,6 @@ services:
       main:
     depends_on:
       - loki
-  # geth:
-  #   build:
-  #     context: images/geth
-  #   volumes:
-  #     - "geth:/home/somebody/.ethereum"
-  #     - "authrpc_secret:/home/somebody/authrpc-secret"
-  #   ports:
-  #     - "30303:30303/tcp"
-  #     - "30303:30303/udp"
-  #   restart: always
-  #   network_mode: host
-  #   extra_hosts:
-  #     - "host.docker.internal:host-gateway"
   reth:
     build:
       context: images/reth
@@ -86,18 +73,6 @@ services:
       main:
     extra_hosts:
       - "host.docker.internal:host-gateway"
-  # prysm:
-  #   build: images/prysm
-  #   volumes:
-  #     - "prysm:/home/somebody/.eth2"
-  #     - "authrpc_secret:/home/somebody/authrpc-secret"
-  #     - "./validator-indices.txt:/home/somebody/validator-indices.txt"
-  #   environment:
-  #     ETH1_HOST: host.docker.internal
-  #   restart: always
-  #   network_mode: host
-  #   extra_hosts:
-  #    - "host.docker.internal:host-gateway"
   ssh:
     build: images/ssh
     expose:
@@ -123,9 +98,7 @@ volumes:
   grafana:
   loki:
   promtail:
-  geth:
   reth:
-  prysm:
   prometheus:
   lighthouse:
   authrpc_secret:
