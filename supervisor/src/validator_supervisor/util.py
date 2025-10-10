@@ -8,8 +8,8 @@ import asyncio
 import signal
 from asyncio import Task, FIRST_COMPLETED
 from collections.abc import Iterable
+import importlib.resources
 import logging
-from pkg_resources import resource_filename
 import prctl
 from subprocess import PIPE
 from typing import Awaitable, Dict, Optional
@@ -74,22 +74,24 @@ async def build_docker_image(
     :return: the Docker image ID
     """
     image_tag = f"validator-supervisor/{image_name}:{version}"
-    context_dir = resource_filename('validator_supervisor', f"images/{image_name}")
+    context_dir_ref = importlib.resources.files('validator_supervisor') / f"images/{image_name}"
     LOG.debug(f"Building Docker image {image_tag}...")
 
     build_cmd = ['docker', 'build', '--pull']
     if build_args:
         for key, val in build_args.items():
             build_cmd.extend(['--build-arg', f"{key}={val}"])
-    build_cmd.extend(['-t', image_tag, context_dir, '--quiet'])
-    build_proc = await asyncio.create_subprocess_exec(*build_cmd, stdout=PIPE, stderr=PIPE)
 
-    image_id_encoded, err_encoded = await build_proc.communicate()
-    if build_proc.returncode != 0:
-        raise DockerBuildException(
-            f"docker build for {image_name} failed with exit code {build_proc.returncode}",
-            err_encoded,
-        )
+    with importlib.resources.as_file(context_dir_ref) as context_dir:
+        build_cmd.extend(['-t', image_tag, str(context_dir), '--quiet'])
+        build_proc = await asyncio.create_subprocess_exec(*build_cmd, stdout=PIPE, stderr=PIPE)
+
+        image_id_encoded, err_encoded = await build_proc.communicate()
+        if build_proc.returncode != 0:
+            raise DockerBuildException(
+                f"docker build for {image_name} failed with exit code {build_proc.returncode}",
+                err_encoded,
+            )
 
     image_id = image_id_encoded.decode().strip()
     LOG.debug(f"Built Docker image {image_tag}: {image_id}")

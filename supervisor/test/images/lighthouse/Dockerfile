@@ -6,9 +6,7 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ARG PORTABLE
-ENV PORTABLE $PORTABLE
-ARG COMMIT=v3.0.0
+ARG COMMIT=v7.1.0
 RUN git clone https://github.com/sigp/lighthouse /lighthouse && \
     cd /lighthouse && \
     git checkout $COMMIT && \

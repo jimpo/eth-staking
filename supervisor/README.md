@@ -17,19 +17,24 @@ supervisor through its RPC interface. The control command opens a shell interfac
 
 This targets Linux and requires libcap. On Debian/Ubuntu, install the `libcap-dev` package.
 
+The project uses [uv](https://docs.astral.sh/uv/) for development and building,
+
+```bash
+pipx install uv
+```
+
 ## Running
 
 To build the Python package, run
 
 ```bash
-pip install build
-pipenv run python -m build
+uv build
 ```
 
 To install the Python packages directly, run
 
 ```bash
-pip install .
+uv pip install .
 ```
 
 To generate or update a configuration file, use the `setup` subcommand.
@@ -58,23 +63,16 @@ python -m validator_supervisor control [...options...]
 
 ## Development
 
-The project uses [Pipenv](https://pipenv.pypa.io/en/latest/) for development,
-
-```bash
-pip install pipenv
-pipenv install
-```
-
 [mypy](http://mypy-lang.org/) for static type checking,
 
 ```bash
-pipenv run mypy
+uv run mypy
 ```
 
 and [unittest](https://docs.python.org/3/library/unittest.html) for testing.
 
 ```bash
-pipenv run python -m unittest
+uv run python -m unittest discover -s src
 ```
 
 Before running certain tests, you should run the test service dependencies with `docker-compose`.

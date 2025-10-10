@@ -18,7 +18,7 @@ from ..util import build_docker_image, set_sighup_on_parent_exit
 LOG = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class ValidatorRelease:
     impl_name: str
     version: str

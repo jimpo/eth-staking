@@ -1,4 +1,4 @@
-FROM ubuntu:jammy
+FROM ubuntu:noble
 
 RUN apt-get update && \
     apt-get install -y \
@@ -14,9 +14,9 @@ RUN gpg --import /tmp/sigp_pgp_release_key.asc && \
     rm /tmp/sigp_pgp_release_key.asc
 
 ARG ARCH=x86_64
-ARG VERSION=v3.0.0
+ARG VERSION=v7.1.0
 # Double check checksum in addition to PGP sig out of extreme paranoia
-ARG CHECKSUM=23e898614d370f16144f5f3c8f3d3e387fed10caa17bad2bb24395d76f18cbc9
+ARG CHECKSUM=85b27845688104ea514bc6e97b0a9d8bf287101f74820f0882274307eed1c65c
 RUN cd /tmp && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc && \
