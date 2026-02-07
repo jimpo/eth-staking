@@ -14,13 +14,11 @@ RUN gpg --import /tmp/reth_pgp_release_key.asc && \
 
 ARG ARCH_TRIPLE=x86_64-unknown-linux-gnu
 ARG VERSION=v1.10.2
-ARG CHECKSUM=a2f6ec573bcc3e737b5ca43ed3f8832dc29b3c9f564ecde5cdb381ccda77ae18
 RUN cd /tmp && \
 		curl -sSLO https://github.com/paradigmxyz/reth/releases/download/$VERSION/reth-$VERSION-$ARCH_TRIPLE.tar.gz && \
 		curl -sSLO https://github.com/paradigmxyz/reth/releases/download/$VERSION/reth-$VERSION-$ARCH_TRIPLE.tar.gz.asc && \
     gpg --verify reth-$VERSION-$ARCH_TRIPLE.tar.gz.asc 2>&1 | \
         grep "Primary key fingerprint: $RETH_SIGNING_KEY" && \
-    [ "$(sha256sum reth-$VERSION-$ARCH_TRIPLE.tar.gz | cut -d ' ' -f 1)" = "$CHECKSUM" ] && \
     tar -zxf reth-$VERSION-$ARCH_TRIPLE.tar.gz && \
     cp reth /usr/local/bin/reth && \
     rm -rf reth reth-$VERSION-$ARCH_TRIPLE.tar.gz reth-$VERSION-$ARCH_TRIPLE.tar.gz.asc
