@@ -13,8 +13,8 @@ RUN gpg --import /tmp/reth_pgp_release_key.asc && \
     rm /tmp/reth_pgp_release_key.asc
 
 ARG ARCH_TRIPLE=x86_64-unknown-linux-gnu
-ARG VERSION=v1.8.2
-ARG CHECKSUM=b269b94d2e1fca291977fb2af191161e203ad043a15f8cf72f2ede6308ea7b25
+ARG VERSION=v1.10.2
+ARG CHECKSUM=a2f6ec573bcc3e737b5ca43ed3f8832dc29b3c9f564ecde5cdb381ccda77ae18
 RUN cd /tmp && \
 		curl -sSLO https://github.com/paradigmxyz/reth/releases/download/$VERSION/reth-$VERSION-$ARCH_TRIPLE.tar.gz && \
 		curl -sSLO https://github.com/paradigmxyz/reth/releases/download/$VERSION/reth-$VERSION-$ARCH_TRIPLE.tar.gz.asc && \

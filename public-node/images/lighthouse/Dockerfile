@@ -6,7 +6,6 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# PGP key hosted at https://keybase.io/sigp/pgp_keys.asc?fingerprint=15e66d941f697e28f49381f426416dc3f30674b0
 ARG SIGP_SIGNING_KEY="15E6 6D94 1F69 7E28 F493  81F4 2641 6DC3 F306 74B0"
 COPY sigp_pgp_release_key.asc /tmp/
 RUN gpg --import /tmp/sigp_pgp_release_key.asc && \
@@ -14,9 +13,9 @@ RUN gpg --import /tmp/sigp_pgp_release_key.asc && \
     rm /tmp/sigp_pgp_release_key.asc
 
 ARG ARCH=x86_64
-ARG VERSION=v7.1.0
+ARG VERSION=v8.1.0
 # Double check checksum in addition to PGP sig out of extreme paranoia
-ARG CHECKSUM=85b27845688104ea514bc6e97b0a9d8bf287101f74820f0882274307eed1c65c
+ARG CHECKSUM=6a8c31866045f3d623af08d1498902253fa1b0c009856b33d15d091941af28db
 RUN cd /tmp && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc && \
