@@ -1,0 +1,3 @@
+[submodule "supervisor/lighthouse"]
+	path = supervisor/lighthouse
+	url = https://github.com/sigp/lighthouse.git

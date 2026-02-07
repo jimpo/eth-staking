@@ -17,11 +17,20 @@ supervisor through its RPC interface. The control command opens a shell interfac
 
 This targets Linux and requires libcap. On Debian/Ubuntu, install the `libcap-dev` package.
 
+The system uses [Docker](https://docs.docker.com/engine/install/) to run the validator processes.
+
+## Development dependencies
+
 The project uses [uv](https://docs.astral.sh/uv/) for development and building,
 
 ```bash
 pipx install uv
 ```
+
+For testing, this project depends on
+
+- [Kurtosis](https://docs.kurtosis.com/install)
+- [yq](https://github.com/mikefarah/yq)
 
 ## Running
 

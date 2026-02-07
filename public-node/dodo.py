@@ -15,7 +15,7 @@ DEPLOYMENT_CONFIG_FILEPATHS = \
     ['network-name', 'authorized_keys', 'validator-pubkeys.txt', 'validator-indices.txt']
 
 DOIT_CONFIG = {
-    'default_tasks': ['update_script'],
+    'default_tasks': ['init_scripts', 'update_scripts'],
 }
 
 
@@ -87,7 +87,7 @@ def task_docker_compose_file():
         }
 
 
-def task_scripts():
+def task_init_scripts():
     """Generate init scripts."""
     for deployment in _deployments():
         yield {
@@ -102,7 +102,7 @@ def task_scripts():
         }
 
 
-def task_update_script():
+def task_update_scripts():
     """Generate update scripts."""
     for deployment in _deployments():
         yield {
