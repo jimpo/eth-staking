@@ -21,8 +21,7 @@ DOIT_CONFIG = {
 
 class Eth2Network(Enum):
     MAINNET = "mainnet"
-    GOERLI  = "goerli"
-    PYRMONT = "pyrmont"
+    PYRMONT = "hoodi"
 
 
 def generate_docker_compose_file(deployment: str):

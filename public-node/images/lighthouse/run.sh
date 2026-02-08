@@ -21,13 +21,14 @@ docker_internal_ip=$(getent hosts host.docker.internal | cut -d ' ' -f1)
 
 exec lighthouse beacon_node \
 		 --disable-upnp \
+		 --listen-address 0.0.0.0 --listen-address '::' \
 		 --http \
-		 --http-address "$docker_internal_ip" \
+		 --http-address 0.0.0.0 \
 		 --metrics \
-		 --metrics-address "$docker_internal_ip" \
+		 --metrics-address 0.0.0.0 \
 		 --execution-endpoint http://$ETH1_HOST:8551 \
 		 --execution-jwt "$authrpc_jwtsecret_path" \
-		 --checkpoint-sync-url https://sync-mainnet.beaconcha.in \
+		 --checkpoint-sync-url https://"$ETH2_NETWORK".checkpoint.sigp.io \
 		 --builder $BUILDER_URL \
      $validator_monitor_flag \
      --network "$ETH2_NETWORK" \
