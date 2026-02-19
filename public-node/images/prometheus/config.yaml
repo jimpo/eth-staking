@@ -39,3 +39,7 @@ scrape_configs:
   - job_name: 'lighthouse_vc'
     static_configs:
       - targets: ['validator-proxy:5064']
+
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
