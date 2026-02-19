@@ -34,7 +34,7 @@ async def run_daemon(config: Config, args):
     supervisor = ValidatorSupervisor(
         config=config,
         root_key=root_key,
-        enable_promtail=not args.disable_promtail,
+        enable_alloy=not args.disable_alloy,
         exit_event=exit_event,
     )
 
@@ -89,7 +89,7 @@ def configure_logging(supervisor_log_path: str, log_level: int = logging.DEBUG) 
     formatter = logging.Formatter('%(levelname)-8s %(name)-15s %(message)s')
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setFormatter(formatter)
-    # Logs are uploaded from the log file to remote Loki by Promtail unless disabled.
+    # Logs are uploaded from the log file to remote Loki by Alloy unless disabled.
     logfile_handler = logging.FileHandler(supervisor_log_path)
     logfile_handler.setFormatter(logging.Formatter('%(levelname)-8s %(name)-15s %(message)s'))
 

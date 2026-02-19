@@ -23,7 +23,7 @@ from .config import Config, DynamicConfig, read_dynamic_config, write_dynamic_co
 from .eip2335 import EIP2335KeystoreSchema
 from .exceptions import ValidatorRunning, UnlockRequired, UnknownNode
 from .key_ops import RootKey, IncorrectPassword
-from .promtail import Promtail
+from .alloy import Alloy
 from .rpc.server import RpcServer, RpcTarget
 from .ssh import SSHForward, SSHClient, SSHTunnel, TcpSocket, UnixSocket, DEFAULT_BASTION_SSH_PORT
 from .subprocess import start_supervised, start_supervised_multi
@@ -56,9 +56,9 @@ class ValidatorSupervisor(RpcTarget):
 
     The ValidatorSupervisor initializes and supervises a number of subprocesses, such as SSH
     connections, restarting them if they error or go down. The supervisor opens SSH connections to
-    all remote nodes for forwarding local logs to Loki using Promtail and creating a reverse SSH
+    all remote nodes for forwarding local logs to Loki using Alloy and creating a reverse SSH
     tunnel from the remote node to the local JSON-RPC over TCP interface. The supervisor also
-    configures and starts the Promtail process and the RPC interface. Most importantly, the
+    configures and starts the Alloy process and the RPC interface. Most importantly, the
     supervisor selects one remote node at a time to create a SSH tunnel to the beacon node and runs
     a local Ethereum 2.0 validator which connects to the beacon node through that tunnel.
 
@@ -78,7 +78,7 @@ class ValidatorSupervisor(RpcTarget):
             config: Config,
             root_key: Optional[RootKey],
             exit_event: asyncio.Event,
-            enable_promtail: bool = False,
+            enable_alloy: bool = False,
             retry_delay: int = RETRY_DELAY,
             validator_container_name: str = DEFAULT_VALIDATOR_CONTAINER_NAME,
     ):
@@ -159,14 +159,14 @@ class ValidatorSupervisor(RpcTarget):
             SSHTunnel(client, tunnels)
             for client, tunnels in zip(self._ssh_clients, port_maps)
         ]
-        if enable_promtail:
+        if enable_alloy:
             log_paths = {
                 'validator_supervisor': self.config.supervisor_log_path,
             }
             for impl_name in get_validator_impls():
                 log_paths[impl_name] = self.config.validator_log_path(impl_name)
-            self._promtails = [
-                Promtail(
+            self._alloys = [
+                Alloy(
                     node.host,
                     forward.local.port,
                     self.config.logs_dir,
@@ -175,8 +175,8 @@ class ValidatorSupervisor(RpcTarget):
                 for node, forward in zip(config.nodes, loki_tunnels)
             ]
         else:
-            LOG.debug("Promtail disabled")
-            self._promtails = []
+            LOG.debug("Alloy disabled")
+            self._alloys = []
         self._validator: Optional[ValidatorRunner] = None
         self._validator_stop_event = asyncio.Event()
         self._validator_task: Optional[asyncio.Task] = None
@@ -218,11 +218,11 @@ class ValidatorSupervisor(RpcTarget):
             stop_ssh_tunnels,
         )
 
-        stop_promtails = asyncio.Event()
-        promtail_tasks = await start_supervised_multi(
-            [(f"promtail to {promtail.node}", promtail) for promtail in self._promtails],
+        stop_alloys = asyncio.Event()
+        alloy_tasks = await start_supervised_multi(
+            [(f"Alloy to {alloy.node}", alloy) for alloy in self._alloys],
             self._retry_delay,
-            stop_promtails,
+            stop_alloys,
         )
 
         try:
@@ -239,15 +239,15 @@ class ValidatorSupervisor(RpcTarget):
         await self._rpc_server.stop()
         await self.stop_validator()
 
-        if self._promtails:
-            LOG.debug("Stopping Promtails")
+        if self._alloys:
+            LOG.debug("Stopping Alloy instances")
 
-            # Give Promtail a bit of time to finish uploading logs.
+            # Give Alloy a bit of time to finish uploading logs.
             await asyncio.sleep(3)
 
-            stop_promtails.set()
-            if promtail_tasks:
-                await asyncio.wait(promtail_tasks)
+            stop_alloys.set()
+            if alloy_tasks:
+                await asyncio.wait(alloy_tasks)
 
         LOG.debug("Stopping SSH tunnels")
         stop_ssh_tunnels.set()

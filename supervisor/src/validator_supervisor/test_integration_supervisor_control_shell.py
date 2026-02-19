@@ -73,7 +73,7 @@ class SupervisorRemoteControlIntegrationTest(unittest.IsolatedAsyncioTestCase):
             ),
             root_key=self.root_key,
             exit_event=self.exit_event,
-            enable_promtail=False,
+            enable_alloy=False,
             retry_delay=0,
             validator_container_name=CONTAINER_NAME,
         )

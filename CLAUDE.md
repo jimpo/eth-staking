@@ -49,7 +49,7 @@ doit
 
 ### Supervisor Core (`supervisor/src/validator_supervisor/`)
 
-- **`supervisor.py`** — `ValidatorSupervisor`: Central orchestrator. Manages SSH tunnels to public nodes, supervises validator Docker container, handles encrypted backups, runs RPC server, and manages Promtail log shipping. Allocates ports dynamically from a configured range.
+- **`supervisor.py`** — `ValidatorSupervisor`: Central orchestrator. Manages SSH tunnels to public nodes, supervises validator Docker container, handles encrypted backups, runs RPC server, and manages Alloy log shipping. Allocates ports dynamically from a configured range.
 - **`config.py`** — Configuration schema using marshmallow for validation/deserialization of YAML config files.
 - **`cli.py`** / **`__main__.py`** — CLI entry points: `daemon`, `control`, `setup` subcommands.
 - **`subprocess.py`** — Supervised process execution with automatic restarts, health checks, and graceful shutdown via signal handling.

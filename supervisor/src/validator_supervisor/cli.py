@@ -40,8 +40,8 @@ def parse_cli_args():
 
     daemon_parser.add_argument('--log-level', type=_parse_log_level, default=logging.DEBUG,
                                help='Log level (DEBUG, INFO, WARN, ERROR, CRITICAL)')
-    daemon_parser.add_argument('--disable-promtail', action='store_true',
-                               help='Disable upload of local logs to remote Loki server with Promtail')
+    daemon_parser.add_argument('--disable-alloy', action='store_true',
+                               help='Disable upload of local logs to remote Loki server with Alloy')
 
     control_parser.add_argument('--config-path',
                                 help='Path to YAML configuration file for daemon running locally')
