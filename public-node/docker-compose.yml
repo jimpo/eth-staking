@@ -16,14 +16,14 @@ services:
     volumes:
       - "prometheus:/prometheus"
     restart: always
-  promtail:
-    build: images/promtail
+  alloy:
+    build: images/alloy
     volumes:
       - "/var/log/journal/:/var/log/journal/"
       - "/run/log/journal/:/run/log/journal/"
       - "/etc/machine-id:/etc/machine-id"
-      - "promtail:/var/lib/promtail"
-    command: ["-config.file=/etc/promtail/config.yml"]
+      - "alloy:/var/lib/alloy/data"
+    command: ["run", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
     restart: always
     depends_on:
       - loki
@@ -78,7 +78,7 @@ networks:
 volumes:
   grafana:
   loki:
-  promtail:
+  alloy:
   reth:
   prometheus:
   lighthouse:
