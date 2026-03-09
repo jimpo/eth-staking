@@ -5,17 +5,26 @@ services:
     volumes:
       - "grafana:/var/lib/grafana"
     restart: always
+    networks:
+      default:
+      public:
   loki:
     build: ./images/loki
     volumes:
       - "loki:/loki"
     command: ["-config.file=/etc/loki/config.yaml"]
     restart: always
+    networks:
+      default:
+      public:
   prometheus:
     build: ./images/prometheus
     volumes:
       - "prometheus:/prometheus"
     restart: always
+    networks:
+      default:
+      public:
   alloy:
     build: images/alloy
     volumes:
@@ -27,6 +36,9 @@ services:
     restart: always
     depends_on:
       - loki
+    networks:
+      default:
+      public:
   node-exporter:
     image: prom/node-exporter:latest
     volumes:
@@ -38,16 +50,20 @@ services:
       - "--path.sysfs=/host/sys"
       - "--path.rootfs=/rootfs"
     restart: always
+    networks:
+      default:
+      public:
   reth:
     build:
       context: images/reth
     volumes:
       - "reth:/home/somebody/.local/share/reth"
       - "authrpc_secret:/home/somebody/authrpc-secret"
-    ports:
-      - "30303:30303/tcp"
-      - "30303:30303/udp"
     restart: always
+    networks:
+      default:
+      vpn_egress:
+        priority: 1000
   lighthouse:
     build: images/lighthouse
     volumes:
@@ -57,14 +73,19 @@ services:
     environment:
       ETH1_HOST: reth
       BUILDER_URL: "http://mev-boost:18550"
-    ports:
-      - "9000:9000/tcp"
-      - "9000:9000/udp"
     restart: always
+    networks:
+      default:
+      vpn_egress:
+        priority: 1000
   mev-boost:
     build:
       context: images/mev-boost
     restart: always
+    networks:
+      default:
+      vpn_egress:
+        priority: 1000
   ssh:
     build: images/ssh
     expose:
@@ -81,11 +102,20 @@ services:
       default:
         aliases:
           - validator-proxy
+      public:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 networks:
   default:
     driver: bridge
+    internal: true
+  public:
+    driver: bridge
+  vpn_egress:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
 volumes:
   grafana:
   loki:
