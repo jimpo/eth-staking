@@ -124,7 +124,7 @@ class ValidatorSupervisor(RpcTarget):
             [
                 SSHForward(
                     TcpSocket.localhost(beacon_node_port_map.lighthouse_rpc),
-                    TcpSocket('lighthouse', 5052),
+                    TcpSocket('host.docker.internal', 5052),
                 ),
                 SSHForward(TcpSocket.localhost(self._alloc_port()), TcpSocket('loki', 3100)),
                 # Reverse tunnel to local SSH server
@@ -142,7 +142,7 @@ class ValidatorSupervisor(RpcTarget):
             ]
             for beacon_node_port_map in self._beacon_node_port_maps
         ]
-        _, _, _, loki_tunnels, _, _, _, _ = zip(*port_maps)
+        _, loki_tunnels, _, _, _, _ = zip(*port_maps)
         self._ssh_clients = [
             SSHClient(node, known_hosts_file, known_hosts_lock)
             for node in config.nodes
