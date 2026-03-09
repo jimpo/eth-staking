@@ -102,7 +102,6 @@ class Alloy(SimpleSubprocess):
         cmd.extend([
             'grafana/alloy:latest',
             'run',
-            '--server.http.listen-addr=127.0.0.1:0',
             '--storage.path=/tmp/alloy-data',
             '/etc/alloy/config.alloy',
         ])

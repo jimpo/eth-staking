@@ -13,7 +13,7 @@ RUN gpg --import /tmp/sigp_pgp_release_key.asc && \
     rm /tmp/sigp_pgp_release_key.asc
 
 ARG ARCH=x86_64
-ARG VERSION=v8.1.1
+ARG VERSION=v8.1.2
 RUN cd /tmp && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz && \
     curl -sSLO https://github.com/sigp/lighthouse/releases/download/$VERSION/lighthouse-$VERSION-$ARCH-unknown-linux-gnu.tar.gz.asc && \
