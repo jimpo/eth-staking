@@ -123,16 +123,8 @@ class ValidatorSupervisor(RpcTarget):
         port_maps: List[List[Union[SSHForward]]] = [
             [
                 SSHForward(
-                    TcpSocket.localhost(beacon_node_port_map.prysm_http),
-                    TcpSocket('host.docker.internal', 3500),
-                ),
-                SSHForward(
-                    TcpSocket.localhost(beacon_node_port_map.prysm_grpc),
-                    TcpSocket('host.docker.internal', 4000),
-                ),
-                SSHForward(
                     TcpSocket.localhost(beacon_node_port_map.lighthouse_rpc),
-                    TcpSocket('host.docker.internal', 5052),
+                    TcpSocket('lighthouse', 5052),
                 ),
                 SSHForward(TcpSocket.localhost(self._alloc_port()), TcpSocket('loki', 3100)),
                 # Reverse tunnel to local SSH server

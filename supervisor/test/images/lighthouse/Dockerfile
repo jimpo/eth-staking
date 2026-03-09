@@ -1,4 +1,4 @@
-FROM rust:1-bullseye AS builder
+FROM rust:1-trixie AS builder
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -6,14 +6,14 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-ARG COMMIT=v7.1.0
+ARG COMMIT=v8.1.2
 RUN git clone https://github.com/sigp/lighthouse /lighthouse && \
     cd /lighthouse && \
     git checkout $COMMIT && \
     make install && \
     make install-lcli
 
-FROM node:16-bullseye
+FROM node:25-trixie
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \

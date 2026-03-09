@@ -55,7 +55,7 @@ python -m validator_supervisor setup [...options...]
 Use `openssl` to generate a self-signed SSL certificate. For example,
 
 ```bash
-openssl req -x509 -newkey ed25519 -nodes -keyout ssl_key.em -out ssl_cert.pem
+openssl req -x509 -newkey ed25519 -nodes -keyout ssl_key.pem -out ssl_cert.pem
 ```
 
 To run the supervisor on the validator host, use the `daemon` subcommand.
@@ -87,7 +87,7 @@ uv run python -m unittest discover -s src
 Before running certain tests, you should run the test service dependencies with `docker-compose`.
 
 ```bash
-docker-compose -f docker-compose.test-deps.yml up
+docker compose -f docker-compose.test-deps.yml up
 ```
 
 ## Full system setup

@@ -42,11 +42,7 @@ class RpcContext:
 class RpcOperation(abc.ABC):
     authenticated = True
 
-    @classmethod
-    @property
-    @abc.abstractmethod
-    def method(cls) -> str:
-        pass
+    method: str
 
     @classmethod
     @abc.abstractmethod
@@ -55,11 +51,7 @@ class RpcOperation(abc.ABC):
 
 
 class RpcOperationPasswordCheck(abc.ABC):
-    @classmethod
-    @property
-    @abc.abstractmethod
-    def method(cls) -> str:
-        pass
+    method: str
 
     @abc.abstractmethod
     async def handle(self, ctx: RpcContext, password: bytes, params: object) -> RpcResult:
@@ -332,9 +324,8 @@ class RpcServer(object):
             )
             self.reader = reader
             self.writer = writer
-            # TODO: Figure out why mypy thinks op.method is a Callable, not a str
             self._operations: Dict[str, Type[RpcOperation]] = \
-                {op.method: op for op in self.OPERATIONS}  # type: ignore
+                {op.method: op for op in self.OPERATIONS}
             self._handler_lock = handler_lock
             self._exit_event = exit_event
             self._password: Optional[bytes] = None
