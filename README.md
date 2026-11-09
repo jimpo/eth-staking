@@ -1,6 +1,10 @@
 # Ethereum 2.0 Staking Infrastructure
 
-This project contains some of the components I use in my Ethereum 2.0 staking setup. This software provides a limited ability to remotely manage a running validator.
+**This system is deprecated and should no longer be used.**
+
+This project contains some of the components I used in my original Ethereum 2.0 staking setup. This software provides a limited ability to remotely manage a running validator.
+
+I have stopped using this setup and transitioned to more standard infrastructure. The Ethereum beacon chain software and network has matured significantly since I set this up.
 
 ## Design goals
 
@@ -45,11 +49,7 @@ To simply network security, most connections are made using unsecured transport 
 
 ## Disclaimers, guarantees, and liability
 
-This project has a bunch of custom software which may be buggy. I take absolutely no responsibility for loss of your funds if you choose to use any of this code.
-
-Only GNU/Linux systems are supported and I have only tested on Ubuntu.
-
-At the moment, I *am* actively staking funds using this software and thus have Skin In The Game to keep it operational. If that changes, I'll update this.
+This project is deprecated and should not be used.
 
 ## Deployment
 
